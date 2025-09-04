@@ -268,6 +268,13 @@ class HUVOCRSystem:
                     continue
                 self._log("   📊 Extrayendo datos estructurados...")
                 extracted_data = extract_huv_data(pdf_text)
+                fuente = extracted_data.get('fecha_ordenamiento_fuente', '')
+                if fuente:
+                    self._log(f"   🗓️ Fecha ordenamiento desde: {fuente}")
+                if extracted_data.get('eps_normalizado'):
+                    self._log("   🔧 EPS normalizada")
+                if extracted_data.get('servicio_normalizado'):
+                    self._log("   🔧 Servicio normalizado")
                 self._log("   📋 Mapeando a formato Excel...")
                 excel_rows = map_to_excel_format(extracted_data, filename)
                 all_rows.extend(excel_rows)

@@ -133,8 +133,8 @@ def main():
     print("🎉 Instalación completada!")
     print("\n📋 Próximos pasos:")
     print("1. Verifica que Tesseract OCR esté instalado")
-    print("2. Ajusta la ruta de Tesseract en ocr_medico_app.py si es necesario")
-    print("3. Ejecuta: python ocr_medico_app.py")
+    print("2. Ajusta la ruta de Tesseract en huv_ocr_sistema_definitivo.py si es necesario")
+    print("3. Ejecuta: python huv_ocr_sistema_definitivo.py")
     print("\n💡 Si tienes problemas, consulta el archivo README.md")
 
 if __name__ == "__main__":

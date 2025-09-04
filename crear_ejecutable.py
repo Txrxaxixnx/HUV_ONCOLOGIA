@@ -44,8 +44,11 @@ def check_dependencies():
 
 def build_executable(main_script: str):
     """Construir el ejecutable"""
+
     if not os.path.exists(main_script):
         print(f"❌ No se encuentra {main_script}")
+    if not os.path.exists("huv_ocr_sistema_definitivo.py"):
+        print("❌ No se encuentra huv_ocr_sistema_definitivo.py")
         return False
 
     # Comando de PyInstaller
@@ -56,6 +59,7 @@ def build_executable(main_script: str):
         "--name=OCR_Medico",   # Nombre del ejecutable
         "--clean",             # Limpiar cache
         main_script
+        "huv_ocr_sistema_definitivo.py"
     ]
 
     cmd_str = " ".join(command)

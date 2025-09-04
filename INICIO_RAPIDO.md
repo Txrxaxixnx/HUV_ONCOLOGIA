@@ -11,7 +11,7 @@
 pip install pytesseract pdf2image pillow pandas openpyxl
 
 # 3. Ejecutar aplicación
-python ocr_medico_app.py
+python huv_ocr_sistema_definitivo.py
 ```
 
 ### Linux (Ubuntu/Debian)
@@ -24,7 +24,7 @@ sudo apt-get install tesseract-ocr tesseract-ocr-spa poppler-utils
 pip install pytesseract pdf2image pillow pandas openpyxl
 
 # 3. Ejecutar aplicación
-python ocr_medico_app.py
+python huv_ocr_sistema_definitivo.py
 ```
 
 ### macOS
@@ -36,7 +36,7 @@ brew install tesseract tesseract-lang poppler
 pip install pytesseract pdf2image pillow pandas openpyxl
 
 # 3. Ejecutar aplicación
-python ocr_medico_app.py
+python huv_ocr_sistema_definitivo.py
 ```
 
 ## 🖱️ Uso en 3 Pasos

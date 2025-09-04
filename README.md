@@ -38,7 +38,7 @@ Una aplicación de escritorio desarrollada en Python para procesar informes méd
 
 3. **Ejecutar la aplicación**:
    ```bash
-   python ocr_medico_app.py
+   python huv_ocr_sistema_definitivo.py
    ```
 
 ### Método 2: Instalación Manual
@@ -71,8 +71,6 @@ Una aplicación de escritorio desarrollada en Python para procesar informes méd
 
 ### Configurar Ruta de Tesseract
 
-La ruta al ejecutable de Tesseract se define en `config.ini` dentro de la sección `[PATHS]`.
-Modifica la opción correspondiente a tu sistema operativo:
 
 - **Windows**: establece `WINDOWS_TESSERACT` con la ruta completa a `tesseract.exe`.
 - **Linux**: ajusta `LINUX_TESSERACT` con la ruta absoluta o deja `tesseract` si está en el `PATH`.
@@ -92,7 +90,7 @@ python -c "import pytesseract, pdf2image, pandas; print('✅ Todas las dependenc
 ### 1. Iniciar la Aplicación
 
 ```bash
-python ocr_medico_app.py
+python huv_ocr_sistema_definitivo.py
 ```
 
 ### 2. Agregar Archivos PDF
@@ -154,7 +152,7 @@ Para crear un archivo `.exe` que funcione sin instalar Python:
 
 2. **Crear el ejecutable**:
    ```bash
-   pyinstaller --onefile --windowed --name="OCR_Medico" ocr_medico_app.py
+   pyinstaller --onefile --windowed --name="OCR_Medico" huv_ocr_sistema_definitivo.py
    ```
 
 3. **Encontrar el ejecutable**:
@@ -223,7 +221,7 @@ Para otros tipos de informes médicos, es necesario modificar las expresiones re
 
 ### Modificar Campos Extraídos
 
-Edita la función `extract_medical_data()` en `ocr_medico_app.py`:
+Edita la función `extract_medical_data()` en `huv_ocr_sistema_definitivo.py`:
 
 ```python
 # Agregar nuevos patrones

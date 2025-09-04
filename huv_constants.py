@@ -42,44 +42,45 @@ ESPECIALIDADES_SERVICIOS = {
     'PEDIATRIA': 'PEDIATRA',
 }
 
-# ─────────────────────── PATRONES REGEX ─────────────────────────
+# ─────────────────────── PATRONES REGEX DEFINITIVOS (VERSIÓN CORREGIDA) ───────────────────────
 PATTERNS_HUV = {
-    'nombre_completo': r'(?:^|\n)\s*Nombre\s*:?[\t ]*([^\n]+?)(?=\s*N\.\s*petici[óo]n|Autopsia\s+No\.|$)',
-    'numero_peticion': r'N\.\s*petici[óo]n\s*:\s*([A-Z0-9\-]+)',
-    'identificacion_completa': r'N\.Identificaci[óo]n\s*:\s*([A-Z]{1,3}\.?\s*[0-9\.]+)',
-    'identificacion_numero': r'N\.Identificaci[óo]n\s*:\s*[A-Z\.]{1,3}\s*([0-9\.]+)',
-    'tipo_documento': r'N\.Identificaci[óo]n\s*:\s*([A-Z]{1,3})\.?',
-    'genero': r'G[ée]nero\s*:\s*([A-Z]+)',
+    # Información básica del paciente
+    'nombre_completo': r'Nombre\s*:\s*([^\n]+?)\s*N\.\s*peticion',
+    'numero_peticion': r'N\.\s*peticion\s*:\s*([A-Z0-9\-]+)',
+    'identificacion_completa': r'N\.Identificación\s*:\s*([A-Z]{1,3}\.?\s*[0-9\.]+)',
+    'identificacion_numero': r'N\.Identificación\s*:\s*[A-Z\.]{1,3}\s*([0-9\.]+)',
+    'tipo_documento': r'N\.Identificación\s*:\s*([A-Z]{1,3})\.?',
+    'genero': r'Genero\s*:\s*([A-Z]+)',
     'edad': r'Edad\s*:\s*(\d+)\s*años',
     'eps': r'EPS\s*:\s*([^\n]+)',
-    # Permite capturar "Médico tratante" o "Médico remitente"
-    'medico_tratante': r'(?:M[ée]dico\s+tratante|M[ée]dico\s+remitente)\s*:?[\t ]*([^\n]+)',
+    'medico_tratante': r'Médico tratante\s*:\s*([^\n]+?)\s*(?:Servicio|Fecha Ingreso|$)',
     'servicio': r'Servicio\s*:\s*([^\n]+)',
     'fecha_ingreso': r'Fecha Ingreso\s*:\s*(\d{2}/\d{2}/\d{4})',
-    'fecha_ingreso_alt': r'Fecha\s+de\s+ingreso\s*:?[\t ]*(\d{2}/\d{2}/\d{4})',
     'fecha_informe': r'Fecha Informe\s*:\s*(\d{2}/\d{2}/\d{4})',
     'fecha_autopsia': r'Fecha y hora de la autopsia:\s*(\d{2}/\d{2}/\d{4})',
-    'organo': r'[ÓO]rgano\s*:\s*([A-ZÁÉÍÓÚÑ\s\+\(\)]+)',
-    'organo_tabla': r'(?is)[ÓO]rgano\s+Fecha\s+toma.*?\n\s*([A-ZÁÉÍÓÚÑ\s\+\(\)]+?)\s*(?:\n\s*)*(?:\d{4}-\d{2}-\d{2})',
-    'fecha_toma': r'Fecha\s*toma\s*:?[\t ]*(\d{4}-\d{2}-\d{2})',
-    'fecha_toma_tabla': r'(?is)[ÓO]rgano\s+Fecha\s+toma.*?\n\s*[A-ZÁÉÍÓÚÑ\s\+\(\)]+?\s*(?:\n\s*)*(\d{4}-\d{2}-\d{2})',
+
+    # Información específica de estudios
+    'organo': r'Organo\s*:\s*([A-ZÁÉÍÓÚÑ\s\+\(\)]+)',
+    'fecha_toma': r'Fecha toma\s*:\s*(\d{4}-\d{2}-\d{2})',
+
+    # Responsables
     'responsable_analisis': r'([A-ZÁÉÍÓÚÑ\s]+)\s*\n\s*Responsable del análisis',
     'usuario_finalizacion': r'(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}),\s*([A-ZÁÉÍÓÚÑ\s]+)',
-    # Encabezados de descripción con o sin tildes
-    'descripcion_macroscopica': r'(?:^|\n)DESCRIPCI[ÓO]N\s+MACROSC[ÓO]PICA\s*(.+?)(?=\n(?:DESCRIPCI[ÓO]N\s+MICROSC[ÓO]PICA|PROTOCOLO\s+MICROSC[ÓO]PICO|DIAGN[OÓ]STICO)|$)',
-    'descripcion_microscopica': r'(?:^|\n)(?:DESCRIPCI[ÓO]N\s+MICROSC[ÓO]PICA|PROTOCOLO\s+MICROSC[ÓO]PICO)\s*(.+?)(?=\n(?:DIAGN[OÓ]STICO|COMENTARIOS)|$)',
-    'diagnostico': r'(?:^|\n)(?:DIAGN[OÓ]STICO(?:S)?(?:\s+ANATOMOPATOL[ÓO]GICOS)?)\s*:?[\r\n]+(.+?)(?=\nCOMENTARIOS|\nResponsable|$)',
-    'comentarios': r'(?:^|\n)COMENTARIOS\s*(.+?)(?=\nResponsable|$)',
-    # Bloque de resumen clínico
-    'datos_clinicos': r'(?:^|\n)Resumen de historia cl[íi]nica\.?\s*(.+?)(?=\nIm[áa]genes diagn[óo]sticas|\nPARACL[ÍI]NICOS|\nPROTOCOLO MACROSC[ÓO]PICO|$)',
-    'identificador_unico': r'Identificador\s+[ÚU]nico[^:]*:\s*([0-9]{4,})',
-    'numero_autorizacion': r'N\.\s*Autorizaci[óo]n[^:]*:\s*([A-Z0-9\-\.]+)',
+
+    # Descripciones largas
+    'descripcion_macroscopica': r'DESCRIPCIÓN MACROSCÓPICA\s*(.+?)(?=DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO|DIAGN[OÓ]STICO|$)',
+    'descripcion_microscopica': r'(?:DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO)\s*(.+?)(?=DIAGN[OÓ]STICO|COMENTARIOS|$)',
+    'diagnostico': r'DIAGN[OÓ]STICO\s*(.+?)(?=COMENTARIOS|Todos los análisis|Responsable|$)',
+    'comentarios': r'COMENTARIOS\s*(.+?)(?=Todos los análisis|Responsable|$)',
+
+    # Identificadores únicos en contenido
+    'identificador_unico': r'Identificador Unico[^:]*:\s*(\d+)',
+    'numero_autorizacion': r'N\.\s*Autorizacion[^:]*:\s*([A-Z0-9]+)',
 }
 
-# ─────────────────────── PALABRAS CLAVE MALIGNIDAD ───────────────────────
+# ─────────────────────── PALABRAS CLAVE PARA MALIGNIDAD ───────────────────────
 MALIGNIDAD_KEYWORDS = [
     'CARCINOMA', 'CANCER', 'MALIGNO', 'MALIGNIDAD', 'METASTASIS', 'METASTÁSICO',
     'NEOPLASIA MALIGNA', 'TUMOR MALIGNO', 'ADENOCARCINOMA', 'LINFOMA',
-    'SARCOMA', 'MELANOMA', 'LEUCEMIA', 'HODGKIN', 'HODKING',
+    'SARCOMA', 'MELANOMA', 'LEUCEMIA', 'HODGKIN', 'HODKING'
 ]
-

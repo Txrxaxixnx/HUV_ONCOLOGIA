@@ -47,3 +47,8 @@ Thumbs.db
 # y el archivo que contendría variables de entorno.
 *.log
 .env
+
+# 7. Archivos generados
+excel/
+pdfs_patologia/
+~$*

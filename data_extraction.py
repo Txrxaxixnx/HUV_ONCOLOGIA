@@ -207,14 +207,78 @@ def extract_huv_data(text: str) -> dict:
         
     return data
 
-# ─────────────────────── MAPEO A EXCEL ─────────────────────────
+# ─────────────────────── MAPEO A EXCEL (VERSIÓN FINAL) ─────────────────────────
 def map_to_excel_format(extracted_data: dict, filename: str) -> list:
     """Mapea datos extraídos al formato Excel de 55 columnas del HUV"""
+
+    # ────────────────── LISTA DE COLUMNAS DE EXCEL (CORREGIDA) ───────────────────
+    EXCEL_COLUMNS = [
+        "N. peticion (0. Numero de biopsia)",
+        "Hospitalizado",
+        "Sede",
+        "EPS",
+        "Servicio",
+        "Médico tratante",
+        "Especialidad",
+        "Ubicación",
+        "N. Autorizacion",
+        "Identificador Unico",
+        "Datos Clinicos",
+        "Fecha ordenamiento",
+        "Tipo de documento",
+        "N. de identificación",
+        "Primer nombre",
+        "Segundo nombre",
+        "Primer apellido",
+        "Segundo apellido",
+        "Fecha de nacimiento",
+        "Edad",
+        "Genero",
+        "Número celular",
+        "Direccion de correo electronico",
+        "Direccion de correo electronico 2",
+        "Contacto de emergencia",
+        "Departamento",
+        "Teléfono del contacto",
+        "Municipio",
+        "N. muestra",
+        "CUPS",
+        "Tipo de examen (4, 12, Metodo de obtención de la muestra, factor de certeza para el diagnóstico)",
+        "Procedimiento (11. Tipo de estudio para el diagnóstico)",
+        "Organo (1. Muestra enviada a patología)",
+        "Tarifa",
+        "Valor",
+        "Copago",
+        "Descuento",
+        "Fecha de ingreso (2. Fecha de la muestra)",
+        "Fecha finalizacion (3. Fecha del informe)",
+        "Usuario finalizacion",
+        "Usuario asignacion micro",
+        "Fecha asignacion micro",
+        "Malignidad",
+        "Condicion",
+        "Descripcion macroscopica",
+        "Descripcion microscopica (8,9, 10,12,. Invasión linfovascular y perineural, indice mitótico/Ki67, Inmunohistoquímica, tamaño tumoral)",
+        "Descripcion Diagnostico (5,6,7 Tipo histológico, subtipo histológico, margenes tumorales)",
+        "Diagnostico Principal",
+        "Comentario",
+        "Informe adicional",
+        "Congelaciones /Otros estudios",
+        "Liquidos (5 Tipo histologico)",
+        "Citometria de flujo (5 Tipo histologico)",
+        "Hora Desc. macro",
+        "Responsable macro"
+    ]
+    # ───────────────────────────────────────────────────────────────────────────────
+
     rows = []
     specimens = extracted_data.get('specimens', []) or [{'muestra': extracted_data.get('numero_peticion', ''), 'organo': extracted_data.get('organo', '')}]
-    
+
     for specimen in specimens:
-        row_data = {}
+        # Crea un diccionario base con todas las columnas vacías
+        row_data = {col: '' for col in EXCEL_COLUMNS}
+
+        # Mapea los datos extraídos a los nombres de columna correctos
         row_data["N. peticion (0. Numero de biopsia)"] = extracted_data.get('numero_peticion', '')
         row_data["Hospitalizado"] = extracted_data.get('hospitalizado', 'NO')
         row_data["Sede"] = HUV_CONFIG['sede_default']
@@ -257,11 +321,10 @@ def map_to_excel_format(extracted_data: dict, filename: str) -> list:
         row_data["Comentario"] = extracted_data.get('comentarios', '')
         row_data["Hora Desc. macro"] = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         row_data["Responsable macro"] = ' '.join(resp_name.split()[:2]) if resp_name else ''
-
-        # Campos vacíos para completar las 55 columnas
-        for col in ["Número celular", "Direccion de correo electronico", "Direccion de correo electronico 2", "Contacto de emergencia", "Teléfono del contacto", "Copago", "Descuento", "Usuario asignacion micro", "Fecha asignacion micro", "Condicion", "Informe adicional", "Congelaciones /Otros estudios", "Liquidos (5 Tipo histologico)", "Citometria de flujo (5 Tipo histologico)"]:
-            row_data[col] = ''
-            
+        
+        # El DataFrame se creará con todas las columnas de EXCEL_COLUMNS,
+        # asegurando que el orden y los nombres sean siempre correctos.
+        # Los campos que no se mapean explícitamente quedarán en blanco por defecto.
         rows.append(row_data)
-    
+
     return rows

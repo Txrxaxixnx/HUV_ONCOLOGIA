@@ -52,7 +52,8 @@ PATTERNS_HUV = {
     'genero': r'Genero\s*:\s*([A-Z]+)',
     'edad': r'Edad\s*:\s*(\d+)\s*años',
     'eps': r'EPS\s*:\s*([^\n]+)',
-    'medico_tratante': r'Médico tratante\s*:\s*([^\n]+)',
+    # Permite capturar "Médico tratante" con o sin tilde
+    'medico_tratante': r'M[ée]dico\s+tratante\s*:\s*([^\n]+)',
     'servicio': r'Servicio\s*:\s*([^\n]+)',
     'fecha_ingreso': r'Fecha Ingreso\s*:\s*(\d{2}/\d{2}/\d{4})',
     'fecha_informe': r'Fecha Informe\s*:\s*(\d{2}/\d{2}/\d{4})',
@@ -61,10 +62,13 @@ PATTERNS_HUV = {
     'fecha_toma': r'Fecha toma\s*:\s*(\d{4}-\d{2}-\d{2})',
     'responsable_analisis': r'([A-ZÁÉÍÓÚÑ\s]+)\s*\n\s*Responsable del análisis',
     'usuario_finalizacion': r'(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}),\s*([A-ZÁÉÍÓÚÑ\s]+)',
-    'descripcion_macroscopica': r'DESCRIPCIÓN MACROSCÓPICA\s*(.+?)(?=DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO|DIAGN[OÓ]STICO|$)',
-    'descripcion_microscopica': r'(?:DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO)\s*(.+?)(?=DIAGN[OÓ]STICO|COMENTARIOS|$)',
-    'diagnostico': r'DIAGN[OÓ]STICO\s*(.+?)(?=COMENTARIOS|Todos los análisis|Responsable|$)',
-    'comentarios': r'COMENTARIOS\s*(.+?)(?=Todos los análisis|Responsable|$)',
+    # Encabezados de descripción con o sin tildes
+    'descripcion_macroscopica': r'(?:^|\n)DESCRIPCI[ÓO]N\s+MACROSC[ÓO]PICA\s*(.+?)(?=\n(?:DESCRIPCI[ÓO]N\s+MICROSC[ÓO]PICA|PROTOCOLO\s+MICROSC[ÓO]PICO|DIAGN[OÓ]STICO)|$)',
+    'descripcion_microscopica': r'(?:^|\n)(?:DESCRIPCI[ÓO]N\s+MICROSC[ÓO]PICA|PROTOCOLO\s+MICROSC[ÓO]PICO)\s*(.+?)(?=\n(?:DIAGN[OÓ]STICO|COMENTARIOS)|$)',
+    'diagnostico': r'(?:^|\n)DIAGN[OÓ]STICO\s*\n(.+?)(?=\nCOMENTARIOS|\nResponsable|$)',
+    'comentarios': r'(?:^|\n)COMENTARIOS\s*(.+?)(?=\nResponsable|$)',
+    # Bloque de resumen clínico
+    'datos_clinicos': r'(?:^|\n)Resumen de historia cl[íi]nica\.?\s*(.+?)(?=\nIm[áa]genes diagn[óo]sticas|\nPARACL[ÍI]NICOS|\nPROTOCOLO MACROSC[ÓO]PICO|$)',
     'identificador_unico': r'Identificador Unico[^:]*:\s*(\d+)',
     'numero_autorizacion': r'N\.\s*Autorizacion[^:]*:\s*([A-Z0-9]+)',
 }

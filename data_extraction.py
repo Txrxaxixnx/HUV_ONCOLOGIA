@@ -190,7 +190,11 @@ def extract_huv_data(text: str) -> dict:
     for date_field in ['fecha_ingreso', 'fecha_informe']:
         if data.get(date_field):
             data[f"{date_field}_converted"] = convert_date_format(data[date_field])
-    if tipo_informe == 'AUTOPSIA' and data.get('fecha_autopsia'):
+    # Determinar fecha de ordenamiento: usar fecha de toma si existe,
+    # en autopsias preferir la fecha de la autopsia
+    if data.get('fecha_toma'):
+        data['fecha_ordenamiento'] = data['fecha_toma']
+    elif tipo_informe == 'AUTOPSIA' and data.get('fecha_autopsia'):
         data['fecha_ordenamiento'] = data['fecha_autopsia']
     else:
         data['fecha_ordenamiento'] = data.get('fecha_ingreso', '')
@@ -216,6 +220,9 @@ def extract_huv_data(text: str) -> dict:
     else:
         organo_text = data.get('organo', '') + ' ' + data.get('descripcion_macroscopica', '')
         data['specimens'] = extract_specimens(organo_text, data.get('numero_peticion', ''))
+    # Unificar clave para número de autorización
+    if 'numero_autorizacion' in data and not data.get('n_autorizacion'):
+        data['n_autorizacion'] = data['numero_autorizacion']
     return data
 
 
@@ -251,10 +258,13 @@ def map_to_excel_format(extracted_data: dict, filename: str) -> list:
         row_data["Servicio"] = extracted_data.get('servicio', '')
         row_data["Médico tratante"] = extracted_data.get('medico_tratante', '')
         row_data["Especialidad"] = extracted_data.get('especialidad_deducida', '')
-        row_data["Ubicación"] = ''
-        row_data["N. Autorizacion"] = extracted_data.get('n_autorizacion', '')
+        # Ubicación se toma del servicio sin espacios
+        row_data["Ubicación"] = extracted_data.get('servicio', '').replace(' ', '')
+        # N. Autorizacion puede venir en diferentes claves
+        row_data["N. Autorizacion"] = extracted_data.get('n_autorizacion', extracted_data.get('numero_autorizacion', ''))
         row_data["Identificador Unico"] = extracted_data.get('identificador_unico', '')
-        row_data["Datos Clinicos"] = ''
+        # Datos clínicos desde el bloque de resumen
+        row_data["Datos Clinicos"] = extracted_data.get('datos_clinicos', '')
         row_data["Fecha ordenamiento"] = convert_date_format(extracted_data.get('fecha_ordenamiento', ''))
         row_data["Tipo de documento"] = extracted_data.get('tipo_documento', HUV_CONFIG['tipo_documento_default'])
         row_data["N. de identificación"] = extracted_data.get('identificacion_numero', '')

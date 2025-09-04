@@ -285,14 +285,16 @@ class HUVOCRSystem:
                 self._log(f"📊 Total de registros generados: {len(all_rows)}")
                 self._log(f"📁 Archivo guardado: {output_filename}")
                 self._log("=" * 60)
-                messagebox.showinfo(
-                    "Procesamiento Completado",
-                    f"✅ Procesamiento exitoso!\n\n"
-                    f"📊 {processed_count} archivos procesados\n"
-                    f"📄 {len(all_rows)} registros generados\n"
-                    f"📁 Archivo: {output_filename}\n\n"
+                mensaje = "\n".join([
+                    "✅ Procesamiento exitoso!",
+                    "",
+                    f"📊 {processed_count} archivos procesados",
+                    f"📄 {len(all_rows)} registros generados",
+                    f"📁 Archivo: {output_filename}",
+                    "",
                     f"El archivo Excel ha sido guardado en:\n{output_path}",
-                )
+                ])
+                messagebox.showinfo("Procesamiento Completado", mensaje)
             except Exception as e:
                 self._log(f"❌ Error generando Excel: {str(e)}")
                 messagebox.showerror("Error", f"Error generando archivo Excel:\n{str(e)}")

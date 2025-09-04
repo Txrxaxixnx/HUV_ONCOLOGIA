@@ -69,8 +69,9 @@ PATTERNS_HUV = {
 
     # Descripciones largas
     'descripcion_macroscopica': r'DESCRIPCIÓN MACROSCÓPICA\s*(.+?)(?=DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO|DIAGN[OÓ]STICO|$)',
-    'descripcion_microscopica': r'(?:DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO)\s*(.+?)(?=DIAGN[OÓ]STICO|COMENTARIOS|$)',
-    'diagnostico': r'(?:^|\n)\s*DIAGN[OÓ]STICO\s*\n(Diagnósticos anatomopatológicos:)?\s*\n(.+?)(?=\n\s*COMENTARIOS|\n\s*ARMANDO CORTES BUELVAS|Responsable del análisis|$)',
+    'descripcion_microscopica': r'(?:DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO)\s*\n?([\s\S]+?)(?=DIAGN[OÓ]STICO)',
+    # LÍNEA NUEVA Y DEFINITIVA
+    'diagnostico': r'(?:^|\n)\s*DIAGN[OÓ]STICO\s*\n(Diagnósticos anatomopatológicos:)?\s*\n?([\s\S]+?)(?=\n\s*COMENTARIOS|\n\s*ARMANDO CORTES BUELVAS|Responsable del análisis|Powered by TCPDF)',
     'comentarios': r'(?:^|\n)\s*COMENTARIOS\s*\n(.+?)(?=\n\s*ARMANDO CORTES BUELVAS|Responsable del análisis|$)',
 
     # Identificadores únicos en contenido

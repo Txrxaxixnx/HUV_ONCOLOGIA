@@ -5,6 +5,7 @@
 import threading
 from datetime import datetime
 from pathlib import Path
+import configparser
 
 import pandas as pd
 import tkinter as tk
@@ -13,6 +14,16 @@ from tkinter import ttk, filedialog, messagebox
 from ocr_processing import pdf_to_text_enhanced
 from data_extraction import extract_huv_data, map_to_excel_format
 
+_config = configparser.ConfigParser()
+_config.read("config.ini")
+
+TIMESTAMP_FORMAT = _config.get("OUTPUT", "TIMESTAMP_FORMAT", fallback="%Y%m%d_%H%M%S")
+OUTPUT_FILENAME = _config.get("OUTPUT", "OUTPUT_FILENAME", fallback="informes_medicos")
+
+WINDOW_WIDTH = _config.getint("INTERFACE", "WINDOW_WIDTH", fallback=900)
+WINDOW_HEIGHT = _config.getint("INTERFACE", "WINDOW_HEIGHT", fallback=700)
+LOG_HEIGHT = _config.getint("INTERFACE", "LOG_HEIGHT", fallback=8)
+
 
 class HUVOCRSystem:
     """Interfaz basada en Tkinter para procesar informes PDF."""
@@ -20,7 +31,7 @@ class HUVOCRSystem:
     def __init__(self, root):
         self.root = root
         root.title("Sistema OCR - Hospital Universitario del Valle")
-        root.geometry("1100x800")
+        root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
         root.configure(bg="#f8f9fa")
 
         self.files = []
@@ -169,7 +180,7 @@ class HUVOCRSystem:
 
         self.log_text = tk.Text(
             log_container,
-            height=10,
+            height=LOG_HEIGHT,
             bg="#2c3e50",
             fg="#ecf0f1",
             font=("Consolas", 9),
@@ -274,8 +285,8 @@ class HUVOCRSystem:
             self._log("💾 Generando archivo Excel...")
             try:
                 df = pd.DataFrame(all_rows)
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_filename = f"Informes_HUV_{timestamp}.xlsx"
+                timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)
+                output_filename = f"{OUTPUT_FILENAME}_{timestamp}.xlsx"
                 output_path = Path(self.output_dir) / output_filename
                 df.to_excel(output_path, index=False, engine="openpyxl")
                 self._log("=" * 60)

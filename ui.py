@@ -14,8 +14,8 @@ from tkinter import ttk, filedialog, messagebox
 from ocr_processing import pdf_to_text_enhanced
 from data_extraction import extract_huv_data, map_to_excel_format
 
-_config = configparser.ConfigParser()
-_config.read("config.ini")
+_config = configparser.ConfigParser(interpolation=None)
+_config.read(Path(__file__).resolve().parent / "config.ini", encoding="utf-8")
 
 TIMESTAMP_FORMAT = _config.get("OUTPUT", "TIMESTAMP_FORMAT", fallback="%Y%m%d_%H%M%S")
 OUTPUT_FILENAME = _config.get("OUTPUT", "OUTPUT_FILENAME", fallback="informes_medicos")

@@ -5,12 +5,13 @@
 import os
 import sys
 import configparser
+from pathlib import Path
 import tkinter as tk
 import pytesseract
 
 # ─────────────────────────── CONFIGURACIÓN ─────────────────────────────
-_config = configparser.ConfigParser()
-_config.read('config.ini')
+_config = configparser.ConfigParser(interpolation=None)
+_config.read(Path(__file__).resolve().parent / 'config.ini', encoding='utf-8')
 
 if sys.platform.startswith("win"):
     tesseract_cmd = _config.get('PATHS', 'WINDOWS_TESSERACT', fallback=os.getenv('WINDOWS_TESSERACT'))

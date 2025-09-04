@@ -51,11 +51,12 @@ Una aplicación de escritorio desarrollada en Python para procesar informes méd
    - Descarga desde [UB-Mannheim Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
    - Instala y anota la ruta (ej: `C:\Program Files\Tesseract-OCR\`)
 
-   **Linux (Ubuntu/Debian)**:
-   ```bash
-   sudo apt-get update
-   sudo apt-get install tesseract-ocr tesseract-ocr-spa poppler-utils
-   ```
+    **Linux (Ubuntu/Debian)**:
+    Ejecuta manualmente:
+    ```bash
+    sudo apt-get update
+    sudo apt-get install tesseract-ocr tesseract-ocr-spa poppler-utils
+    ```
 
    **macOS**:
    ```bash
@@ -64,7 +65,7 @@ Una aplicación de escritorio desarrollada en Python para procesar informes méd
 
 3. **Instalar dependencias de Python**:
    ```bash
-   pip install pytesseract pdf2image pillow pandas openpyxl
+    pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
    ```
 
 ## 🔧 Configuración
@@ -84,7 +85,7 @@ Cambia la ruta por donde instalaste Tesseract.
 
 ```bash
 tesseract --version
-python -c "import pytesseract, pdf2image, pandas; print('✅ Todas las dependencias instaladas')"
+python -c "import pytesseract, fitz, PIL, pandas, openpyxl, dateutil; print('✅ Todas las dependencias instaladas')"
 ```
 
 ## 📖 Manual de Uso
@@ -178,7 +179,7 @@ Para crear un archivo `.exe` que funcione sin instalar Python:
 
 **Solución**:
 ```bash
-pip install pytesseract pdf2image pillow pandas openpyxl
+pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
 ```
 
 ### Error: "Permission denied" o problemas de permisos
@@ -290,7 +291,6 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
 Desarrollado por **[Tu Nombre]** con:
 
 - **Tesseract OCR**: Google's open-source OCR engine
-- **pdf2image**: PDF to image conversion
 - **pytesseract**: Python wrapper for Tesseract
 - **tkinter**: Python's standard GUI library
 - **pandas & openpyxl**: Data processing and Excel generation

@@ -268,6 +268,16 @@ class HUVOCRSystem:
                     continue
                 self._log("   📊 Extrayendo datos estructurados...")
                 extracted_data = extract_huv_data(pdf_text)
+                # ----- INICIO DE CÓDIGO DE DEPURACIÓN DE MALIGNIDAD -----
+                print(f"\n--- DEBUG: {filename} ---")
+                diagnostico_texto = extracted_data.get('diagnostico', '¡¡¡DIAGNÓSTICO NO ENCONTRADO!!!')
+                microscopica_texto = extracted_data.get('descripcion_microscopica', '¡¡¡DESCRIPCIÓN MICROSCÓPICA NO ENCONTRADA!!!')
+                
+                print(f"TEXTO DEL DIAGNÓSTICO EXTRAÍDO:\n---\n{diagnostico_texto}\n---")
+                print(f"TEXTO MICROSCÓPICO EXTRAÍDO:\n---\n{microscopica_texto}\n---")
+                print(f"RESULTADO DE MALIGNIDAD CALCULADO: {extracted_data.get('malignidad')}")
+                print("--- FIN DEBUG ---\n")
+                # ----- FIN DE CÓDIGO DE DEPURACIÓN -----
                 fuente = extracted_data.get('fecha_ordenamiento_fuente', '')
                 if fuente:
                     self._log(f"   🗓️ Fecha ordenamiento desde: {fuente}")

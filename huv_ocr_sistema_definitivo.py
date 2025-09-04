@@ -9,7 +9,7 @@ Autor: Sistema de Análisis HUV
 Fecha: Agosto 2025
 """
 
-import os, re, sys, io, threading
+import os, re, sys, io, threading, configparser
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from datetime import datetime, date
@@ -18,11 +18,20 @@ import fitz  # PyMuPDF
 from PIL import Image
 import pytesseract
 import pandas as pd
-from dateutil.parser import parse
 
 # ─────────────────────────── CONFIGURACIÓN ─────────────────────────────
+_config = configparser.ConfigParser()
+_config.read('config.ini')
+
 if sys.platform.startswith("win"):
-    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    tesseract_cmd = _config.get('PATHS', 'WINDOWS_TESSERACT', fallback=os.getenv('WINDOWS_TESSERACT'))
+elif sys.platform.startswith("darwin"):
+    tesseract_cmd = _config.get('PATHS', 'MACOS_TESSERACT', fallback=os.getenv('MACOS_TESSERACT'))
+else:
+    tesseract_cmd = _config.get('PATHS', 'LINUX_TESSERACT', fallback=os.getenv('LINUX_TESSERACT'))
+
+if tesseract_cmd:
+    pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
 
 # ─────────────────────── CONFIGURACIÓN HOSPITALARIA ───────────────────────
 HUV_CONFIG = {

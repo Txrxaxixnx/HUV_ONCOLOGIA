@@ -144,7 +144,7 @@ def main():
 
     if passed == total:
         print("🎉 ¡Sistema listo para OCR Médico!")
-        print("▶️  Ejecuta: python ocr_medico_app.py")
+        print("▶️  Ejecuta: python huv_ocr_sistema_definitivo.py")
     else:
         print("⚠️  Sistema no completamente configurado")
         print("📖 Consulta README.md para solución de problemas")

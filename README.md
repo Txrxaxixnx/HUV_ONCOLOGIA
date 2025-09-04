@@ -38,7 +38,7 @@ Una aplicación de escritorio desarrollada en Python para procesar informes méd
 
 3. **Ejecutar la aplicación**:
    ```bash
-   python ocr_medico_app.py
+   python huv_ocr_sistema_definitivo.py
    ```
 
 ### Método 2: Instalación Manual
@@ -69,16 +69,14 @@ Una aplicación de escritorio desarrollada en Python para procesar informes méd
 
 ## 🔧 Configuración
 
-### Configurar Ruta de Tesseract (Solo Windows)
+### Configurar Ruta de Tesseract
 
-Si Tesseract no se encuentra automáticamente, edita el archivo `ocr_medico_app.py` en la línea:
 
-```python
-# Busca esta línea (aproximadamente línea 35)
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-```
+- **Windows**: establece `WINDOWS_TESSERACT` con la ruta completa a `tesseract.exe`.
+- **Linux**: ajusta `LINUX_TESSERACT` con la ruta absoluta o deja `tesseract` si está en el `PATH`.
+- **macOS**: cambia `MACOS_TESSERACT` con la ruta donde Homebrew instaló el binario (`/usr/local/bin/tesseract` o `/opt/homebrew/bin/tesseract`).
 
-Cambia la ruta por donde instalaste Tesseract.
+También puedes definir estas rutas mediante variables de entorno (`WINDOWS_TESSERACT`, `LINUX_TESSERACT` o `MACOS_TESSERACT`).
 
 ### Verificar Instalación
 
@@ -92,7 +90,7 @@ python -c "import pytesseract, pdf2image, pandas; print('✅ Todas las dependenc
 ### 1. Iniciar la Aplicación
 
 ```bash
-python ocr_medico_app.py
+python huv_ocr_sistema_definitivo.py
 ```
 
 ### 2. Agregar Archivos PDF
@@ -154,7 +152,7 @@ Para crear un archivo `.exe` que funcione sin instalar Python:
 
 2. **Crear el ejecutable**:
    ```bash
-   pyinstaller --onefile --windowed --name="OCR_Medico" ocr_medico_app.py
+   pyinstaller --onefile --windowed --name="OCR_Medico" huv_ocr_sistema_definitivo.py
    ```
 
 3. **Encontrar el ejecutable**:
@@ -223,7 +221,7 @@ Para otros tipos de informes médicos, es necesario modificar las expresiones re
 
 ### Modificar Campos Extraídos
 
-Edita la función `extract_medical_data()` en `ocr_medico_app.py`:
+Edita la función `extract_medical_data()` en `huv_ocr_sistema_definitivo.py`:
 
 ```python
 # Agregar nuevos patrones

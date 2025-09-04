@@ -30,11 +30,11 @@ def install_python_packages():
     """Instalar paquetes de Python necesarios"""
     packages = [
         "pytesseract",
-        "pdf2image", 
+        "PyMuPDF",
         "pillow",
         "pandas",
         "openpyxl",
-        "pathlib"
+        "python-dateutil"
     ]
 
     print("📦 Instalando paquetes de Python...")
@@ -92,11 +92,11 @@ def create_requirements_file():
     """Crear archivo requirements.txt"""
     requirements = """# Dependencias para OCR Médico
 pytesseract>=0.3.10
-pdf2image>=1.16.3
+PyMuPDF>=1.23.0
 pillow>=10.0.0
 pandas>=2.0.0
 openpyxl>=3.1.0
-pathlib
+python-dateutil>=2.8.0
 """
 
     with open("requirements.txt", "w", encoding="utf-8") as f:

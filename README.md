@@ -64,7 +64,7 @@ Una aplicación de escritorio desarrollada en Python para procesar informes méd
 
 3. **Instalar dependencias de Python**:
    ```bash
-   pip install pytesseract pdf2image pillow pandas openpyxl
+    pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
    ```
 
 ## 🔧 Configuración
@@ -84,7 +84,7 @@ Cambia la ruta por donde instalaste Tesseract.
 
 ```bash
 tesseract --version
-python -c "import pytesseract, pdf2image, pandas; print('✅ Todas las dependencias instaladas')"
+python -c "import pytesseract, fitz, PIL, pandas, openpyxl, dateutil; print('✅ Todas las dependencias instaladas')"
 ```
 
 ## 📖 Manual de Uso
@@ -178,7 +178,7 @@ Para crear un archivo `.exe` que funcione sin instalar Python:
 
 **Solución**:
 ```bash
-pip install pytesseract pdf2image pillow pandas openpyxl
+    pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
 ```
 
 ### Error: "Permission denied" o problemas de permisos
@@ -192,7 +192,7 @@ pip install pytesseract pdf2image pillow pandas openpyxl
 **Solución**:
 - Verifica que los PDFs no estén corruptos
 - Asegúrate de que sean informes médicos con texto legible
-- Aumenta la resolución de DPI en el código (línea con `convert_from_path`)
+- Aumenta la resolución de DPI en el código (ajusta la matriz de conversión en PyMuPDF)
 
 ### Resultados de OCR imprecisos
 
@@ -290,7 +290,7 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
 Desarrollado por **[Tu Nombre]** con:
 
 - **Tesseract OCR**: Google's open-source OCR engine
-- **pdf2image**: PDF to image conversion
+- **PyMuPDF**: PDF to image conversion
 - **pytesseract**: Python wrapper for Tesseract
 - **tkinter**: Python's standard GUI library
 - **pandas & openpyxl**: Data processing and Excel generation

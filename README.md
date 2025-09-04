@@ -154,7 +154,7 @@ Para crear un archivo `.exe` que funcione sin instalar Python:
 
 2. **Crear el ejecutable**:
    ```bash
-   pyinstaller --onefile --windowed --name="OCR_Medico" ocr_medico_app.py
+   pyinstaller --onefile --windowed --name="OCR_Medico" huv_ocr_sistema_definitivo.py
    ```
 
 3. **Encontrar el ejecutable**:

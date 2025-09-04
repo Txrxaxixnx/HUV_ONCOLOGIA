@@ -8,6 +8,7 @@ import subprocess
 import sys
 import os
 from pathlib import Path
+import argparse
 
 def run_command(command, description):
     """Ejecutar comando y mostrar progreso"""
@@ -41,10 +42,10 @@ def check_dependencies():
         print("📦 Instalando PyInstaller...")
         return run_command(f"{sys.executable} -m pip install pyinstaller", "Instalando PyInstaller")
 
-def build_executable():
+def build_executable(main_script: str):
     """Construir el ejecutable"""
-    if not os.path.exists("ocr_medico_app.py"):
-        print("❌ No se encuentra ocr_medico_app.py")
+    if not os.path.exists(main_script):
+        print(f"❌ No se encuentra {main_script}")
         return False
 
     # Comando de PyInstaller
@@ -54,7 +55,7 @@ def build_executable():
         "--windowed",          # Sin ventana de consola
         "--name=OCR_Medico",   # Nombre del ejecutable
         "--clean",             # Limpiar cache
-        "ocr_medico_app.py"
+        main_script
     ]
 
     cmd_str = " ".join(command)
@@ -65,6 +66,17 @@ def build_executable():
 
 def main():
     """Función principal"""
+    parser = argparse.ArgumentParser(
+        description="Constructor de Ejecutable OCR Médico"
+    )
+    parser.add_argument(
+        "script",
+        nargs="?",
+        default="huv_ocr_sistema_definitivo.py",
+        help="Script principal de la aplicación",
+    )
+    args = parser.parse_args()
+
     print("🏗️  Constructor de Ejecutable OCR Médico")
     print("=" * 50)
 
@@ -74,7 +86,7 @@ def main():
         return 1
 
     # Construir ejecutable
-    if not build_executable():
+    if not build_executable(args.script):
         print("❌ Error al construir ejecutable")
         return 1
 

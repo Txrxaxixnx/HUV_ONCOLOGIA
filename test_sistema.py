@@ -14,10 +14,11 @@ def test_dependencies():
 
     dependencies = {
         'pytesseract': 'Tesseract OCR Python wrapper',
-        'pdf2image': 'Conversión de PDF a imágenes',
+        'fitz': 'Procesamiento de PDF (PyMuPDF)',
         'PIL': 'Python Imaging Library (Pillow)',
         'pandas': 'Manipulación de datos',
         'openpyxl': 'Lectura/escritura de Excel',
+        'dateutil': 'Manejo de fechas',
         'tkinter': 'Interfaz gráfica'
     }
 
@@ -70,7 +71,7 @@ def test_tesseract():
             print("💡 Soluciones:")
             print("   - Instala Tesseract OCR en tu sistema")
             print("   - En Windows: https://github.com/UB-Mannheim/tesseract/wiki")
-            print("   - En Linux: sudo apt-get install tesseract-ocr")
+            print("   - En Linux, instala manualmente: sudo apt-get install tesseract-ocr")
             print("   - En macOS: brew install tesseract")
             return False
 

@@ -7,8 +7,8 @@
 # 1. Descargar e instalar Tesseract OCR
 # https://github.com/UB-Mannheim/tesseract/wiki
 
-# 2. Instalar Python dependencies
-pip install pytesseract pdf2image pillow pandas openpyxl
+# 2. Instalar dependencias de Python
+pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
 
 # 3. Ejecutar aplicación
 python huv_ocr_sistema_definitivo.py
@@ -17,11 +17,12 @@ python huv_ocr_sistema_definitivo.py
 ### Linux (Ubuntu/Debian)
 ```bash
 # 1. Instalar Tesseract y dependencias del sistema
+# Ejecuta manualmente:
 sudo apt-get update
 sudo apt-get install tesseract-ocr tesseract-ocr-spa poppler-utils
 
-# 2. Instalar Python dependencies
-pip install pytesseract pdf2image pillow pandas openpyxl
+# 2. Instalar dependencias de Python
+pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
 
 # 3. Ejecutar aplicación
 python huv_ocr_sistema_definitivo.py
@@ -32,8 +33,8 @@ python huv_ocr_sistema_definitivo.py
 # 1. Instalar Tesseract
 brew install tesseract tesseract-lang poppler
 
-# 2. Instalar Python dependencies
-pip install pytesseract pdf2image pillow pandas openpyxl
+# 2. Instalar dependencias de Python
+pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
 
 # 3. Ejecutar aplicación
 python huv_ocr_sistema_definitivo.py

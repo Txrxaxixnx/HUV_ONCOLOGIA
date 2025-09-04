@@ -70,8 +70,8 @@ PATTERNS_HUV = {
     # Descripciones largas
     'descripcion_macroscopica': r'DESCRIPCIÓN MACROSCÓPICA\s*(.+?)(?=DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO|DIAGN[OÓ]STICO|$)',
     'descripcion_microscopica': r'(?:DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO)\s*(.+?)(?=DIAGN[OÓ]STICO|COMENTARIOS|$)',
-    'diagnostico': r'DIAGN[OÓ]STICO\s*(.+?)(?=COMENTARIOS|Todos los análisis|Responsable|$)',
-    'comentarios': r'COMENTARIOS\s*(.+?)(?=Todos los análisis|Responsable|$)',
+    'diagnostico': r'(?:^|\n)\s*DIAGN[OÓ]STICO\s*\n(Diagnósticos anatomopatológicos:)?\s*\n(.+?)(?=\n\s*COMENTARIOS|\n\s*ARMANDO CORTES BUELVAS|Responsable del análisis|$)',
+    'comentarios': r'(?:^|\n)\s*COMENTARIOS\s*\n(.+?)(?=\n\s*ARMANDO CORTES BUELVAS|Responsable del análisis|$)',
 
     # Identificadores únicos en contenido
     'identificador_unico': r'Identificador Unico[^:]*:\s*(\d+)',

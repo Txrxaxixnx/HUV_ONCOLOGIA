@@ -11,6 +11,14 @@ import fitz  # PyMuPDF
 from PIL import Image
 import pytesseract
 import pandas as pd
+from huv_constants import (
+    HUV_CONFIG,
+    CUPS_CODES,
+    PROCEDIMIENTOS,
+    ESPECIALIDADES_SERVICIOS,
+    PATTERNS_HUV,
+    MALIGNIDAD_KEYWORDS,
+)
 
 # ─────────────────────────── CONFIGURACIÓN ─────────────────────────────
 _config = configparser.ConfigParser()
@@ -25,91 +33,6 @@ else:
 
 if tesseract_cmd:
     pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
-
-# ─────────────────────── CONFIGURACIÓN HOSPITALARIA ───────────────────────
-HUV_CONFIG = {
-    'hospital_name': 'HOSPITAL UNIVERSITARIO DEL VALLE',
-    'hospital_code': 'HUV',
-    'sede_default': 'PRINCIPAL',
-    'departamento_default': 'VALLE DEL CAUCA',
-    'municipio_default': 'CALI',
-    'tipo_documento_default': 'CC',
-    'tarifa_default': 'GENERAL',
-    'valor_default': 0.0
-}
-
-# ─────────────────────── CÓDIGOS Y ESPECIALIDADES ─────────────────────────
-CUPS_CODES = {
-    'AUTOPSIA': '898301',
-    'INMUNOHISTOQUIMICA': '898807', 
-    'BIOPSIA': '898201',
-    'REVISION': '898806',
-    'CITOLOGIA': '898241',
-    'CONGELACION': '898242'
-}
-
-PROCEDIMIENTOS = {
-    '898301': '898301 Autopsia completa',
-    '898807': '898807 Estudio anatomopatologico de marcacion inmunohistoquimica basica (especifico)',
-    '898201': '898201 Estudio de coloracion basica en especimen de reconocimiento',
-    '898806': '898806 Verificacion integral con preparacion de material de rutina'
-}
-
-ESPECIALIDADES_SERVICIOS = {
-    'UCI': 'MEDICO INTENSIVISTA',
-    'GINECOLOGIA': 'GINECOLOGIA Y OBSTETRICIA',
-    'GINECOLOGIA ONCOLOGICA': 'GINECOLOGIA ONCOLOGICA',
-    'ALTO RIESGO OBSTETRICO': 'GINECOLOGIA ONCOLOGICA',
-    'MEDICINA': 'MEDICINA GENERAL',
-    'URGENCIAS': 'MEDICINA DE URGENCIAS',
-    'NEONATOLOGIA': 'NEONATOLOGIA',
-    'PEDIATRIA': 'PEDIATRA'
-}
-
-# ─────────────────────── PATRONES REGEX DEFINITIVOS (VERSIÓN CORREGIDA) ───────────────────────
-PATTERNS_HUV = {
-    # Información básica del paciente - Patrones más robustos que capturan hasta el final de la línea
-    'nombre_completo': r'Nombre\s*:\s*([^\n]+?)\s*N\.\s*peticion',
-    'numero_peticion': r'N\.\s*peticion\s*:\s*([A-Z0-9\-]+)',
-    'identificacion_completa': r'N\.Identificación\s*:\s*([A-Z]{1,3}\.?\s*[0-9\.]+)',
-    'identificacion_numero': r'N\.Identificación\s*:\s*[A-Z\.]{1,3}\s*([0-9\.]+)',
-    'tipo_documento': r'N\.Identificación\s*:\s*([A-Z]{1,3})\.?',
-    'genero': r'Genero\s*:\s*([A-Z]+)',
-    'edad': r'Edad\s*:\s*(\d+)\s*años', # <--- Captura solo los dígitos antes de "años"
-    'eps': r'EPS\s*:\s*([^\n]+)',
-    'medico_tratante': r'Médico tratante\s*:\s*([^\n]+)',
-    'servicio': r'Servicio\s*:\s*([^\n]+)',
-    'fecha_ingreso': r'Fecha Ingreso\s*:\s*(\d{2}/\d{2}/\d{4})',
-    'fecha_informe': r'Fecha Informe\s*:\s*(\d{2}/\d{2}/\d{4})',
-
-    'fecha_autopsia': r'Fecha y hora de la autopsia:\s*(\d{2}/\d{2}/\d{4})',
-
-    
-    # Información específica de estudios
-    'organo': r'Organo\s*:\s*([A-ZÁÉÍÓÚÑ\s\+\(\)]+)',
-    'fecha_toma': r'Fecha toma\s*:\s*(\d{4}-\d{2}-\d{2})',
-    
-    # Responsables
-    'responsable_analisis': r'([A-ZÁÉÍÓÚÑ\s]+)\s*\n\s*Responsable del análisis', # <--- Más específico
-    'usuario_finalizacion': r'(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}),\s*([A-ZÁÉÍÓÚÑ\s]+)',
-    
-    # Descripciones largas (CORRECCIÓN CRÍTICA AQUÍ)
-    'descripcion_macroscopica': r'DESCRIPCIÓN MACROSCÓPICA\s*(.+?)(?=DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO|DIAGN[OÓ]STICO|$)',
-    'descripcion_microscopica': r'(?:DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO)\s*(.+?)(?=DIAGN[OÓ]STICO|COMENTARIOS|$)',
-    'diagnostico': r'DIAGN[OÓ]STICO\s*(.+?)(?=COMENTARIOS|Todos los análisis|Responsable|$)', # <--- CORREGIDO con [OÓ]
-    'comentarios': r'COMENTARIOS\s*(.+?)(?=Todos los análisis|Responsable|$)',
-    
-    # Identificadores únicos en contenido
-    'identificador_unico': r'Identificador Unico[^:]*:\s*(\d+)',
-    'numero_autorizacion': r'N\.\s*Autorizacion[^:]*:\s*([A-Z0-9]+)',
-}
-
-# ─────────────────────── PALABRAS CLAVE PARA MALIGNIDAD ───────────────────────
-MALIGNIDAD_KEYWORDS = [
-    'CARCINOMA', 'CANCER', 'MALIGNO', 'MALIGNIDAD', 'METASTASIS', 'METASTÁSICO',
-    'NEOPLASIA MALIGNA', 'TUMOR MALIGNO', 'ADENOCARCINOMA', 'LINFOMA', 
-    'SARCOMA', 'MELANOMA', 'LEUCEMIA', 'HODGKIN', 'HODKING'
-]
 
 # ─────────────────────── FUNCIONES DE UTILIDAD ───────────────────────
 def detect_report_type(text: str) -> str:

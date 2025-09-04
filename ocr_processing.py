@@ -3,15 +3,33 @@
 """Funciones relacionadas con el procesamiento OCR."""
 
 import io
+import os
 import sys
+import configparser
 
 import fitz  # PyMuPDF
 from PIL import Image
 import pytesseract
 
-# Configuración específica para Windows
+# ─────────────────────────── CONFIGURACIÓN ─────────────────────────────
+_config = configparser.ConfigParser()
+_config.read("config.ini")
+
 if sys.platform.startswith("win"):
-    pytesseract.pytesseract.tesseract_cmd = r"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+    tesseract_cmd = _config.get(
+        "PATHS", "WINDOWS_TESSERACT", fallback=os.getenv("WINDOWS_TESSERACT")
+    )
+elif sys.platform.startswith("darwin"):
+    tesseract_cmd = _config.get(
+        "PATHS", "MACOS_TESSERACT", fallback=os.getenv("MACOS_TESSERACT")
+    )
+else:
+    tesseract_cmd = _config.get(
+        "PATHS", "LINUX_TESSERACT", fallback=os.getenv("LINUX_TESSERACT")
+    )
+
+if tesseract_cmd:
+    pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
 
 
 def pdf_to_text_enhanced(pdf_path: str) -> str:

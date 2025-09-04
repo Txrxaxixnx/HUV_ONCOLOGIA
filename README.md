@@ -69,16 +69,14 @@ Una aplicación de escritorio desarrollada en Python para procesar informes méd
 
 ## 🔧 Configuración
 
-### Configurar Ruta de Tesseract (Solo Windows)
+### Configurar Ruta de Tesseract
 
-Si Tesseract no se encuentra automáticamente, edita el archivo `huv_ocr_sistema_definitivo.py` en la línea:
 
-```python
-# Busca esta línea (aproximadamente línea 35)
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-```
+- **Windows**: establece `WINDOWS_TESSERACT` con la ruta completa a `tesseract.exe`.
+- **Linux**: ajusta `LINUX_TESSERACT` con la ruta absoluta o deja `tesseract` si está en el `PATH`.
+- **macOS**: cambia `MACOS_TESSERACT` con la ruta donde Homebrew instaló el binario (`/usr/local/bin/tesseract` o `/opt/homebrew/bin/tesseract`).
 
-Cambia la ruta por donde instalaste Tesseract.
+También puedes definir estas rutas mediante variables de entorno (`WINDOWS_TESSERACT`, `LINUX_TESSERACT` o `MACOS_TESSERACT`).
 
 ### Verificar Instalación
 

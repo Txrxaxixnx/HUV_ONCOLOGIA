@@ -8,7 +8,7 @@
 # https://github.com/UB-Mannheim/tesseract/wiki
 
 # 2. Instalar Python dependencies
-pip install pytesseract pdf2image pillow pandas openpyxl
+pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
 
 # 3. Ejecutar aplicación
 python ocr_medico_app.py
@@ -21,7 +21,7 @@ sudo apt-get update
 sudo apt-get install tesseract-ocr tesseract-ocr-spa poppler-utils
 
 # 2. Instalar Python dependencies
-pip install pytesseract pdf2image pillow pandas openpyxl
+pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
 
 # 3. Ejecutar aplicación
 python ocr_medico_app.py
@@ -33,7 +33,7 @@ python ocr_medico_app.py
 brew install tesseract tesseract-lang poppler
 
 # 2. Instalar Python dependencies
-pip install pytesseract pdf2image pillow pandas openpyxl
+pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
 
 # 3. Ejecutar aplicación
 python ocr_medico_app.py

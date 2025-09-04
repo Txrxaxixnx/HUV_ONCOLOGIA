@@ -14,10 +14,11 @@ def test_dependencies():
 
     dependencies = {
         'pytesseract': 'Tesseract OCR Python wrapper',
-        'pdf2image': 'Conversión de PDF a imágenes',
+        'fitz': 'Procesamiento de PDF con PyMuPDF',
         'PIL': 'Python Imaging Library (Pillow)',
         'pandas': 'Manipulación de datos',
         'openpyxl': 'Lectura/escritura de Excel',
+        'dateutil': 'Manejo de fechas',
         'tkinter': 'Interfaz gráfica'
     }
 

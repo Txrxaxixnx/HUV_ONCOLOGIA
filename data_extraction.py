@@ -3,6 +3,7 @@
 """Utilidades y funciones de extracción de datos para el sistema OCR HUV."""
 
 import re
+import unicodedata
 from datetime import datetime, date
 from huv_constants import (
     HUV_CONFIG,
@@ -103,9 +104,13 @@ def convert_date_format(date_str: str) -> str:
         return ''
 
 
+def _normalize_text(u: str) -> str:
+    return unicodedata.normalize('NFKD', u or '').encode('ASCII', 'ignore').decode().upper()
+
+
 def detect_malignancy(diagnostico: str, descripcion_micro: str = '') -> str:
     """Detecta malignidad basada en palabras clave"""
-    text_to_check = f"{diagnostico} {descripcion_micro}".upper()
+    text_to_check = f"{_normalize_text(diagnostico)} {_normalize_text(descripcion_micro)}"
     for keyword in MALIGNIDAD_KEYWORDS:
         if keyword in text_to_check:
             return 'PRESENTE'
@@ -176,6 +181,12 @@ def extract_huv_data(text: str) -> dict:
                 data[key] = ''
         except Exception:
             data[key] = ''
+    if not data.get('fecha_ingreso') and data.get('fecha_ingreso_alt'):
+        data['fecha_ingreso'] = data['fecha_ingreso_alt']
+    if not data.get('organo'):
+        data['organo'] = re.sub(r'\s+', ' ', data.get('organo_tabla', '')).strip()
+    if not data.get('fecha_toma'):
+        data['fecha_toma'] = data.get('fecha_toma_tabla', '')
     if data.get('nombre_completo'):
         names = split_full_name(data['nombre_completo'])
         data.update(names)
@@ -184,7 +195,14 @@ def extract_huv_data(text: str) -> dict:
     if data.get('edad'):
         try:
             edad = int(data['edad'])
-            data['fecha_nacimiento'] = calculate_birth_date(edad)
+            ref_date = data.get('fecha_informe') or data.get('fecha_ingreso')
+            ref_iso = ''
+            if ref_date:
+                m = re.match(r'(\d{2})/(\d{2})/(\d{4})', ref_date)
+                if m:
+                    d, mo, y = m.groups()
+                    ref_iso = f'{y}-{mo}-{d}'
+            data['fecha_nacimiento'] = calculate_birth_date(edad, ref_iso)
         except Exception:
             data['fecha_nacimiento'] = ''
     for date_field in ['fecha_ingreso', 'fecha_informe']:
@@ -194,10 +212,31 @@ def extract_huv_data(text: str) -> dict:
     # en autopsias preferir la fecha de la autopsia
     if data.get('fecha_toma'):
         data['fecha_ordenamiento'] = data['fecha_toma']
+        data['fecha_ordenamiento_fuente'] = 'fecha_toma'
     elif tipo_informe == 'AUTOPSIA' and data.get('fecha_autopsia'):
         data['fecha_ordenamiento'] = data['fecha_autopsia']
+        data['fecha_ordenamiento_fuente'] = 'fecha_autopsia'
     else:
         data['fecha_ordenamiento'] = data.get('fecha_ingreso', '')
+        data['fecha_ordenamiento_fuente'] = 'fecha_ingreso'
+    original_eps = data.get('eps', '')
+    if original_eps:
+        normalized_eps = re.sub(r'\s*S\.A\.S\b', ' S.A.S', original_eps, flags=re.I)
+        if normalized_eps != original_eps:
+            data['eps_normalizado'] = True
+        data['eps'] = normalized_eps
+    original_servicio = data.get('servicio', '')
+    if original_servicio:
+        normalized_servicio = re.sub(r'([A-ZÁÉÍÓÚÑ]+)\s*([0-9]+)\b', r'\1 \2', original_servicio.strip(), flags=re.I)
+        if normalized_servicio != original_servicio.strip():
+            data['servicio_normalizado'] = True
+        data['servicio'] = normalized_servicio
+    if data.get('genero'):
+        data['genero'] = data['genero'].strip().upper()
+    if data.get('datos_clinicos'):
+        data['datos_clinicos_flag'] = 'SI'
+    else:
+        data['datos_clinicos_flag'] = ''
     servicio = data.get('servicio', '')
     data['especialidad_deducida'] = deduce_specialty(servicio, tipo_informe)
     data['hospitalizado'] = determine_hospitalization(servicio, tipo_informe)
@@ -263,8 +302,8 @@ def map_to_excel_format(extracted_data: dict, filename: str) -> list:
         # N. Autorizacion puede venir en diferentes claves
         row_data["N. Autorizacion"] = extracted_data.get('n_autorizacion', extracted_data.get('numero_autorizacion', ''))
         row_data["Identificador Unico"] = extracted_data.get('identificador_unico', '')
-        # Datos clínicos desde el bloque de resumen
-        row_data["Datos Clinicos"] = extracted_data.get('datos_clinicos', '')
+        # Datos clínicos solo marcados como SI/""
+        row_data["Datos Clinicos"] = extracted_data.get('datos_clinicos_flag', '')
         row_data["Fecha ordenamiento"] = convert_date_format(extracted_data.get('fecha_ordenamiento', ''))
         row_data["Tipo de documento"] = extracted_data.get('tipo_documento', HUV_CONFIG['tipo_documento_default'])
         row_data["N. de identificación"] = extracted_data.get('identificacion_numero', '')

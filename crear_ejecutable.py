@@ -43,8 +43,8 @@ def check_dependencies():
 
 def build_executable():
     """Construir el ejecutable"""
-    if not os.path.exists("ocr_medico_app.py"):
-        print("❌ No se encuentra ocr_medico_app.py")
+    if not os.path.exists("huv_ocr_sistema_definitivo.py"):
+        print("❌ No se encuentra huv_ocr_sistema_definitivo.py")
         return False
 
     # Comando de PyInstaller
@@ -54,7 +54,7 @@ def build_executable():
         "--windowed",          # Sin ventana de consola
         "--name=OCR_Medico",   # Nombre del ejecutable
         "--clean",             # Limpiar cache
-        "ocr_medico_app.py"
+        "huv_ocr_sistema_definitivo.py"
     ]
 
     cmd_str = " ".join(command)

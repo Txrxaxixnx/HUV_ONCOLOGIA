@@ -58,8 +58,7 @@ def build_executable(main_script: str):
         "--windowed",          # Sin ventana de consola
         "--name=OCR_Medico",   # Nombre del ejecutable
         "--clean",             # Limpiar cache
-        main_script
-        "huv_ocr_sistema_definitivo.py"
+        main_script,
     ]
 
     cmd_str = " ".join(command)

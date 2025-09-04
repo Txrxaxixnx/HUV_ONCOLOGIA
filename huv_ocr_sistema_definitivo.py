@@ -2,12 +2,6 @@
 # -*- coding: utf-8 -*-
 """Punto de entrada principal para el sistema OCR del HUV."""
 
-import tkinter as tk
-=======
-Autor: Sistema de Análisis HUV
-Fecha: Agosto 2025
-"""
-
 import os, re, sys, io, threading, configparser
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox

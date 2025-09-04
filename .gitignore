@@ -50,6 +50,6 @@ Thumbs.db
 .env
 
 # 7. Archivos generados
-excel/
-pdfs_patologia/
+#excel/
+#pdfs_patologia/
 ~$*

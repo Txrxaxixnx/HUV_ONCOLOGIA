@@ -7,6 +7,7 @@
 # Ignora cualquier carpeta de entorno virtual. Son específicas de cada máquina.
 # La nombras "venv1", pero esto cubrirá los nombres más comunes.
 venv/
+venv0/
 venv1/
 env/
 .venv/

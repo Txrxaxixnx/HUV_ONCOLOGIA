@@ -1,3 +1,4 @@
+#huv_ocr_sistema_definitivo.py:
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Punto de entrada principal para el sistema OCR del HUV."""

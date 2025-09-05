@@ -56,8 +56,8 @@ PATTERNS_HUV = {
     'eps': r'EPS\s*:\s*([^\n]+)',
     'medico_tratante': r'Médico tratante\s*:\s*([^\n]+?)\s*(?:Servicio|Fecha Ingreso|$)',
     'servicio': r'Servicio\s*:\s*([^\n]+)',
-    'fecha_ingreso': r'Fecha Ingreso\s*:\s*(\d{2}/\d{2}/\d{4})',
-    'fecha_informe': r'Fecha Informe\s*:\s*(\d{2}/\d{2}/\d{4})',
+    'fecha_ingreso': r'Fecha Ingreso[^\d/]*(\d{2}/\d{2}/\d{4})',
+    'fecha_informe': r'Fecha Informe[^\d/]*(\d{2}/\d{2}/\d{4})',
     'fecha_autopsia': r'Fecha y hora de la autopsia:\s*(\d{2}/\d{2}/\d{4})',
 
     # Información específica de estudios

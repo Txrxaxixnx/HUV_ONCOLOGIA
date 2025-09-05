@@ -266,6 +266,18 @@ class HUVOCRSystem:
             try:
                 self._log("   🔍 Extrayendo texto con OCR...")
                 pdf_text = pdf_to_text_enhanced(pdf_path)
+
+                # ----- INICIO DE CÓDIGO DE DEPURACIÓN -----
+                # Guardar el texto crudo del OCR en un archivo para análisis
+                debug_filename = f"DEBUG_OCR_OUTPUT_{filename}.txt"
+                try:
+                    with open(Path(self.output_dir) / debug_filename, "w", encoding="utf-8") as f:
+                        f.write(pdf_text)
+                    self._log(f"   🐛 ¡Texto de OCR guardado en {debug_filename} para depuración!")
+                except Exception as e:
+                    self._log(f"   ❌ No se pudo guardar el archivo de depuración: {e}")
+                # ----- FIN DE CÓDIGO DE DEPURACIÓN -----
+
                 if not pdf_text.strip():
                     self._log("   ⚠️  Advertencia: No se extrajo texto del PDF")
                     continue

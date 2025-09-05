@@ -11,6 +11,8 @@ import configparser
 import pandas as pd
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+from openpyxl import load_workbook
+from openpyxl.styles import Font, Alignment, PatternFill
 
 from ocr_processing import pdf_to_text_enhanced
 from data_extraction import extract_huv_data, map_to_excel_format
@@ -307,6 +309,38 @@ class HUVOCRSystem:
                 output_filename = f"{OUTPUT_FILENAME}_{timestamp}.xlsx"
                 output_path = Path(self.output_dir) / output_filename
                 df.to_excel(output_path, index=False, engine="openpyxl")
+                # --- INICIO DE CÓDIGO PARA FORMATEAR ENCABEZADOS ---
+                self._log("   ✨ Aplicando formato profesional a encabezados...")
+                wb = load_workbook(output_path)
+                ws = wb.active
+
+                # Definir estilos: fuente profesional y ajuste de texto
+                header_font = Font(name='Calibri', size=11, bold=True, color='FFFFFF')
+                header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+                header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+
+                # Aplicar estilos a cada celda del encabezado (primera fila)
+                for cell in ws[1]:
+                    cell.font = header_font
+                    cell.alignment = header_alignment
+                    cell.fill = header_fill
+
+                # Ajustar el ancho de las columnas para una mejor visualización
+                for col in ws.columns:
+                    max_length = 0
+                    column = col[0].column_letter
+                    for cell in col:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(cell.value)
+                        except:
+                            pass
+                    adjusted_width = (max_length + 2)
+                    ws.column_dimensions[column].width = min(adjusted_width, 50) # Limitar ancho máximo
+
+                # Guardar el archivo Excel con el nuevo formato
+                wb.save(output_path)
+                
                 self._log("=" * 60)
                 self._log("🎉 PROCESAMIENTO COMPLETADO")
                 self._log(f"✅ Archivos procesados exitosamente: {processed_count}")

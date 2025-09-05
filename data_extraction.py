@@ -6,6 +6,8 @@
 import re
 import unicodedata
 from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
+
 from huv_constants import (
     HUV_CONFIG,
     CUPS_CODES,
@@ -63,22 +65,43 @@ def split_full_name(full_name: str) -> dict:
         result['segundo_apellido'] = ' '.join(parts[3:])
     return result
 
-def calculate_birth_date(edad: int, fecha_referencia_str: str = None) -> str:
-    """Calcula fecha de nacimiento basada en edad"""
+def calculate_birth_date(edad_str: str, fecha_referencia_str: str = None) -> str:
+    """
+    Calcula la fecha de nacimiento de forma precisa a partir de un texto de edad
+    (ej. "33 años 10 meses 27 dias") y una fecha de referencia.
+    """
     try:
+        # Extraer años, meses y días del texto. Si no se encuentra, el valor es 0.
+        years_match = re.search(r'(\d+)\s*a[ñn]os', edad_str, re.IGNORECASE)
+        months_match = re.search(r'(\d+)\s*meses', edad_str, re.IGNORECASE)
+        days_match = re.search(r'(\d+)\s*d[ií]as', edad_str, re.IGNORECASE)
+        
+        years = int(years_match.group(1)) if years_match else 0
+        months = int(months_match.group(1)) if months_match else 0
+        days = int(days_match.group(1)) if days_match else 0
+
+        # Si no se extrae ninguna parte de la edad, no se puede calcular.
+        if not years and not months and not days:
+            return ''
+
+        # Usar la fecha de hoy como último recurso si no hay fecha de referencia
         ref_date = date.today()
         if fecha_referencia_str:
-            # Intenta parsear varios formatos comunes
+            # Intentar leer la fecha de referencia en los formatos comunes
             for fmt in ('%d/%m/%Y', '%Y-%m-%d'):
                 try:
                     ref_date = datetime.strptime(fecha_referencia_str, fmt).date()
                     break
                 except ValueError:
                     continue
-        birth_year = ref_date.year - edad
-        birth_date = date(birth_year, ref_date.month, ref_date.day)
+        
+        # El cálculo clave: restar la duración (edad) a la fecha de referencia
+        birth_date = ref_date - relativedelta(years=years, months=months, days=days)
+        
+        # Devolver en el formato estándar DD/MM/YYYY
         return birth_date.strftime('%d/%m/%Y')
-    except:
+    except Exception:
+        # Si ocurre cualquier error, devolver una cadena vacía para no romper el programa
         return ''
 
 def convert_date_format(date_str: str) -> str:
@@ -100,11 +123,12 @@ def _normalize_text(u: str) -> str:
     """Normaliza texto para búsquedas (quita tildes, mayúsculas)"""
     return unicodedata.normalize('NFKD', u or '').encode('ASCII', 'ignore').decode().upper()
 
-def detect_malignancy(diagnostico: str, descripcion_micro: str = '') -> str:
-    """Detecta malignidad basada en palabras clave"""
-    text_to_check = f"{_normalize_text(diagnostico)} {_normalize_text(descripcion_micro)}"
+def detect_malignancy(*texts: str) -> str:
+    """Detecta malignidad basada en palabras clave en múltiples textos."""
+    text_to_check = " ".join(_normalize_text(t) for t in texts if t)
     for keyword in MALIGNIDAD_KEYWORDS:
-        if keyword in text_to_check:
+        # Usamos \b para buscar la palabra completa y evitar falsos positivos
+        if re.search(r'\b' + keyword + r'\b', text_to_check):
             return 'PRESENTE'
     return 'AUSENTE'
 
@@ -166,12 +190,18 @@ def extract_huv_data(text: str) -> dict:
     if data.get('identificacion_numero'):
         data['identificacion_numero'] = re.sub(r'[^\d]', '', data['identificacion_numero'])
     if data.get('edad'):
-        try:
-            edad = int(data['edad'])
-            ref_date = data.get('fecha_informe') or data.get('fecha_ingreso')
-            data['fecha_nacimiento'] = calculate_birth_date(edad, ref_date)
-        except (ValueError, TypeError):
-            data['fecha_nacimiento'] = ''
+        # La edad extraída del PDF (ej: "33 años 10 meses 27 dias")
+        edad_texto_completo = data['edad']
+        
+        # Extraer solo el número de años para la columna 'Edad'
+        anos_match = re.search(r'(\d+)', edad_texto_completo)
+        data['edad'] = anos_match.group(1) if anos_match else ''
+        
+        # Usar la fecha de ingreso (ya corregida) o la de informe como referencia
+        ref_date_str = data.get('fecha_ingreso') or data.get('fecha_informe')
+        
+        # Calcular la fecha de nacimiento usando el texto completo de la edad
+        data['fecha_nacimiento'] = calculate_birth_date(edad_texto_completo, ref_date_str)
 
     if tipo_informe == 'AUTOPSIA' and data.get('fecha_autopsia'):
         data['fecha_ordenamiento'] = data['fecha_autopsia']
@@ -181,7 +211,17 @@ def extract_huv_data(text: str) -> dict:
     servicio = data.get('servicio', '')
     data['especialidad_deducida'] = deduce_specialty(servicio, tipo_informe)
     data['hospitalizado'] = determine_hospitalization(servicio, tipo_informe)
-    data['malignidad'] = detect_malignancy(data.get('diagnostico', ''), data.get('descripcion_microscopica', ''))
+
+    # Lógica de malignidad mejorada para buscar en diagnóstico, micro y comentarios
+    data['malignidad'] = detect_malignancy(
+        data.get('diagnostico', ''),
+        data.get('descripcion_microscopica', ''),
+        data.get('comentarios', '')
+    )
+    # --- INICIO DE NUEVA LÓGICA PARA CORREGIR DATOS ---
+    # Si encontramos un certificado de defunción, lo usamos como Identificador Unico
+    if data.get('certificado_defuncion'):
+        data['identificador_unico'] = data['certificado_defuncion']
     
     if tipo_informe in CUPS_CODES:
         data['cups_code'] = CUPS_CODES[tipo_informe]

@@ -52,7 +52,7 @@ PATTERNS_HUV = {
     'identificacion_numero': r'N\.Identificación\s*:\s*[A-Z\.]{1,3}\s*([0-9\.]+)',
     'tipo_documento': r'N\.Identificación\s*:\s*([A-Z]{1,3})\.?',
     'genero': r'Genero\s*:\s*([A-Z]+)',
-    'edad': r'Edad\s*:\s*(\d+)\s*años',
+    'edad': r'Edad\s*:\s*([^\n]+)',
     'eps': r'EPS\s*:\s*([^\n]+)',
     'medico_tratante': r'Médico tratante\s*:\s*([^\n]+?)\s*(?:Servicio|Fecha Ingreso|$)',
     'servicio': r'Servicio\s*:\s*([^\n]+)',
@@ -63,13 +63,14 @@ PATTERNS_HUV = {
     # Información específica de estudios
     'organo': r'Organo\s*:\s*([A-ZÁÉÍÓÚÑ\s\+\(\)]+)',
     'fecha_toma': r'Fecha toma\s*:\s*(\d{4}-\d{2}-\d{2})',
+    'certificado_defuncion': r'No\.\s*Certificado\s*de\s*defunción\s*([0-9]+)',
 
     # Responsables
     'responsable_analisis': r'([A-ZÁÉÍÓÚÑ\s]+)\s*\n\s*Responsable del análisis',
     'usuario_finalizacion': r'(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}),\s*([A-ZÁÉÍÓÚÑ\s]+)',
 
     # Descripciones largas
-    'descripcion_macroscopica': r'DESCRIPCIÓN MACROSCÓPICA\s*(.+?)(?=DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO|DIAGN[OÓ]STICO|$)',
+    'descripcion_macroscopica': r'PROTOCOLO MACROSCÓPICO\s*\n([\s\S]+?)(?=DESCRIPCIÓN MICROSCÓPICA|DIAGN[OÓ]STICO|$)',
     'descripcion_microscopica': r'(?:DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO)\s*\n?([\s\S]+?)(?=DIAGN[OÓ]STICO)',
     # LÍNEA NUEVA Y DEFINITIVA
     'diagnostico': r'(?:^|\n)\s*DIAGN[OÓ]STICO\s*\n(Diagnósticos anatomopatológicos:)?\s*\n?([\s\S]+?)(?=\n\s*COMENTARIOS|\n\s*ARMANDO CORTES BUELVAS|Responsable del análisis|Powered by TCPDF)',

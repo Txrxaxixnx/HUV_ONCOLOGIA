@@ -1,3 +1,4 @@
+# huv_constants.py:
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Constantes compartidas para el sistema OCR HUV."""

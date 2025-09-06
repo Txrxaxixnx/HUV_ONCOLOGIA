@@ -1,6 +1,6 @@
-# Guía de Inicio Rápido — OCR Médico HUV
+# Guia de Inicio Rapido - OCR Medico HUV
 
-## Instalación Express (5 minutos)
+## Instalacion Express (5 minutos)
 
 ### Windows
 ```cmd
@@ -10,7 +10,7 @@
 # 2) Instalar dependencias de Python
 pip install -r requirements.txt
 
-# 3) Ejecutar la aplicación
+# 3) Ejecutar la aplicacion
 python huv_ocr_sistema_definitivo.py
 ```
 
@@ -31,11 +31,11 @@ python huv_ocr_sistema_definitivo.py
 
 ## Uso en 3 pasos
 
-1) Agregar PDFs: “Agregar Archivos” o “Agregar Carpeta”.
-2) Elegir destino: “Seleccionar Carpeta de Salida”.
-3) Procesar: “Procesar PDFs”.
+1) Agregar PDFs: "Agregar Archivos" o "Agregar Carpeta".
+2) Elegir destino: "Seleccionar Carpeta de Salida".
+3) Procesar: "Procesar PDFs".
 
-## Verificación rápida
+## Verificacion rapida
 
 ```bash
 python test_sistema.py
@@ -43,19 +43,18 @@ python test_sistema.py
 
 ## Problemas comunes
 
-| Problema | Solución |
+| Problema | Solucion |
 |---|---|
 | Tesseract not found | Instalar Tesseract y agregar al PATH o configurar en config.ini |
 | No module named ... | `pip install -r requirements.txt` |
 | Resultados imprecisos | Aumentar DPI en config.ini, revisar calidad del PDF |
-| Lento con PDFs grandes | Procesar por lotes pequeños, cerrar otras apps |
+| Lento con PDFs grandes | Procesar por lotes pequenos, cerrar otras apps |
 
 ## Rendimiento esperado
 
-- 1 PDF (2 páginas): ~30 s
+- 1 PDF (2 paginas): ~30 s
 - 10 PDFs: ~5 min
-- Precisión: 85–95% (según calidad del documento)
+- Precision: 85-95% (segun calidad del documento)
 
 ---
-Para más detalles técnicos: `analisis/README.md`
-
+Para mas detalles tecnicos: `analisis/README.md`

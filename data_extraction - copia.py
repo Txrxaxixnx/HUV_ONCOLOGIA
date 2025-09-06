@@ -1,3 +1,4 @@
+#data_extraction.py:
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Utilidades y funciones de extracción de datos para el sistema OCR HUV."""
@@ -22,7 +23,7 @@ def detect_report_type(text: str) -> str:
     """Detecta el tipo de informe basado en patrones del HUV"""
     m = re.search(r'N\.\s*peticion\s*:\s*([A-Z0-9\-]+)', text, re.IGNORECASE)
     if m:
-        numero = m.group(1).upper()
+        numero = m.group(1)
         if re.match(r'A\d{6}', numero):
             return 'AUTOPSIA'
         elif re.match(r'IHQ\d{6}', numero):
@@ -31,7 +32,6 @@ def detect_report_type(text: str) -> str:
             return 'BIOPSIA'
         elif re.match(r'R\d{6}', numero):
             return 'REVISION'
-            
     text_upper = text.upper()
     if 'AUTOPSIA' in text_upper:
         return 'AUTOPSIA'
@@ -41,17 +41,14 @@ def detect_report_type(text: str) -> str:
         return 'BIOPSIA'
     elif 'REVISION' in text_upper:
         return 'REVISION'
-        
     return 'DESCONOCIDO'
 
 def split_full_name(full_name: str) -> dict:
     """Divide nombre completo según lógica del HUV"""
     if not full_name:
         return {'primer_nombre': '', 'segundo_nombre': '', 'primer_apellido': '', 'segundo_apellido': ''}
-        
     parts = [p.strip() for p in full_name.strip().split() if p.strip()]
     result = {'primer_nombre': '', 'segundo_nombre': '', 'primer_apellido': '', 'segundo_apellido': ''}
-    
     if len(parts) == 1:
         result['primer_nombre'] = parts[0]
     elif len(parts) == 2:
@@ -66,7 +63,6 @@ def split_full_name(full_name: str) -> dict:
         result['segundo_nombre'] = parts[1]
         result['primer_apellido'] = parts[2]
         result['segundo_apellido'] = ' '.join(parts[3:])
-        
     return result
 
 def calculate_birth_date(edad_str: str, fecha_referencia_str: str = None) -> str:
@@ -75,6 +71,7 @@ def calculate_birth_date(edad_str: str, fecha_referencia_str: str = None) -> str
     (ej. "33 años 10 meses 27 dias") y una fecha de referencia.
     """
     try:
+        # Extraer años, meses y días del texto. Si no se encuentra, el valor es 0.
         years_match = re.search(r'(\d+)\s*a[ñn]os', edad_str, re.IGNORECASE)
         months_match = re.search(r'(\d+)\s*meses', edad_str, re.IGNORECASE)
         days_match = re.search(r'(\d+)\s*d[ií]as', edad_str, re.IGNORECASE)
@@ -83,11 +80,14 @@ def calculate_birth_date(edad_str: str, fecha_referencia_str: str = None) -> str
         months = int(months_match.group(1)) if months_match else 0
         days = int(days_match.group(1)) if days_match else 0
 
+        # Si no se extrae ninguna parte de la edad, no se puede calcular.
         if not years and not months and not days:
             return ''
 
+        # Usar la fecha de hoy como último recurso si no hay fecha de referencia
         ref_date = date.today()
         if fecha_referencia_str:
+            # Intentar leer la fecha de referencia en los formatos comunes
             for fmt in ('%d/%m/%Y', '%Y-%m-%d'):
                 try:
                     ref_date = datetime.strptime(fecha_referencia_str, fmt).date()
@@ -95,10 +95,13 @@ def calculate_birth_date(edad_str: str, fecha_referencia_str: str = None) -> str
                 except ValueError:
                     continue
         
+        # El cálculo clave: restar la duración (edad) a la fecha de referencia
         birth_date = ref_date - relativedelta(years=years, months=months, days=days)
-        return birth_date.strftime('%d/%m/%Y')
         
+        # Devolver en el formato estándar DD/MM/YYYY
+        return birth_date.strftime('%d/%m/%Y')
     except Exception:
+        # Si ocurre cualquier error, devolver una cadena vacía para no romper el programa
         return ''
 
 def convert_date_format(date_str: str) -> str:
@@ -106,6 +109,7 @@ def convert_date_format(date_str: str) -> str:
     if not date_str:
         return ''
     try:
+        # Intenta parsear con dateutil, que es muy flexible
         dt = datetime.strptime(date_str.strip(), '%d/%m/%Y')
         return dt.strftime('%d/%m/%Y')
     except ValueError:
@@ -113,7 +117,7 @@ def convert_date_format(date_str: str) -> str:
             dt = datetime.strptime(date_str.strip(), '%Y-%m-%d')
             return dt.strftime('%d/%m/%Y')
         except ValueError:
-            return date_str
+            return date_str # Devuelve original si no puede parsear
 
 def _normalize_text(u: str) -> str:
     """Normaliza texto para búsquedas (quita tildes, mayúsculas)"""
@@ -123,6 +127,7 @@ def detect_malignancy(*texts: str) -> str:
     """Detecta malignidad basada en palabras clave en múltiples textos."""
     text_to_check = " ".join(_normalize_text(t) for t in texts if t)
     for keyword in MALIGNIDAD_KEYWORDS:
+        # Usamos \b para buscar la palabra completa y evitar falsos positivos
         if re.search(r'\b' + keyword + r'\b', text_to_check):
             return 'PRESENTE'
     return 'AUSENTE'
@@ -133,6 +138,12 @@ def deduce_specialty(servicio: str, tipo_informe: str = '') -> str:
     for key, specialty in ESPECIALIDADES_SERVICIOS.items():
         if key in servicio_upper:
             return specialty
+    if 'UCI' in servicio_upper: return 'MEDICO INTENSIVISTA'
+    if 'GINECO' in servicio_upper: return 'GINECOLOGIA Y OBSTETRICIA'
+    if 'OBSTETRICO' in servicio_upper: return 'GINECOLOGIA ONCOLOGICA'
+    if 'URGENCIA' in servicio_upper: return 'MEDICINA DE URGENCIAS'
+    if 'NEONAT' in servicio_upper: return 'NEONATOLOGIA'
+    if 'PEDIATR' in servicio_upper: return 'PEDIATRA'
     return 'MEDICINA GENERAL'
 
 def determine_hospitalization(servicio: str, tipo_informe: str) -> str:
@@ -150,17 +161,14 @@ def extract_specimens(organo_text: str, numero_peticion: str) -> list:
     """Extrae información de especímenes múltiples de forma robusta."""
     found_specimens = []
     matches = list(re.finditer(r'(?m)^[ \t]*([A-J])\.\s*[\"\']?([^\"\'\:\n]+?)[\"\' ]?\s*:', organo_text))
-    
     if len(matches) > 1 or (len(matches) == 1 and matches[0].group(1).upper() != 'A'):
         for match in matches:
             suffix = match.group(1).upper()
             organo = match.group(2).strip()
-            found_specimens.append({'muestra': f"{numero_peticion}-{suffix}", 'organo': organo})
-            
+            found_specimens.append({'muestra': f"{numero_peticion}-{suffix}",'organo': organo})
     if not found_specimens:
         organo_limpio = re.sub(r'^[A-Z]\.\s*', '', organo_text.strip()).strip()
-        found_specimens.append({'muestra': numero_peticion, 'organo': organo_limpio if organo_limpio else "No especificado"})
-        
+        found_specimens.append({'muestra': numero_peticion,'organo': organo_limpio if organo_limpio else "No especificado"})
     return found_specimens
 
 # ─────────────────────── EXTRACCIÓN PRINCIPAL ─────────────────────────
@@ -179,15 +187,20 @@ def extract_huv_data(text: str) -> dict:
 
     if data.get('nombre_completo'):
         data.update(split_full_name(data['nombre_completo']))
-        
     if data.get('identificacion_numero'):
         data['identificacion_numero'] = re.sub(r'[^\d]', '', data['identificacion_numero'])
-        
     if data.get('edad'):
+        # La edad extraída del PDF (ej: "33 años 10 meses 27 dias")
         edad_texto_completo = data['edad']
+        
+        # Extraer solo el número de años para la columna 'Edad'
         anos_match = re.search(r'(\d+)', edad_texto_completo)
         data['edad'] = anos_match.group(1) if anos_match else ''
+        
+        # Usar la fecha de ingreso (ya corregida) o la de informe como referencia
         ref_date_str = data.get('fecha_ingreso') or data.get('fecha_informe')
+        
+        # Calcular la fecha de nacimiento usando el texto completo de la edad
         data['fecha_nacimiento'] = calculate_birth_date(edad_texto_completo, ref_date_str)
 
     if tipo_informe == 'AUTOPSIA' and data.get('fecha_autopsia'):
@@ -199,12 +212,14 @@ def extract_huv_data(text: str) -> dict:
     data['especialidad_deducida'] = deduce_specialty(servicio, tipo_informe)
     data['hospitalizado'] = determine_hospitalization(servicio, tipo_informe)
 
+    # Lógica de malignidad mejorada para buscar en diagnóstico, micro y comentarios
     data['malignidad'] = detect_malignancy(
         data.get('diagnostico', ''),
         data.get('descripcion_microscopica', ''),
         data.get('comentarios', '')
     )
-    
+    # --- INICIO DE NUEVA LÓGICA PARA CORREGIR DATOS ---
+    # Si encontramos un certificado de defunción, lo usamos como Identificador Unico
     if data.get('certificado_defuncion'):
         data['identificador_unico'] = data['certificado_defuncion']
     
@@ -227,40 +242,84 @@ def extract_huv_data(text: str) -> dict:
         organo_text = data.get('organo', '') + ' ' + data.get('descripcion_macroscopica', '')
         data['specimens'] = extract_specimens(organo_text, data.get('numero_peticion', ''))
 
+    # Unificar clave de autorización
     if 'numero_autorizacion' in data and not data.get('n_autorizacion'):
         data['n_autorizacion'] = data['numero_autorizacion']
-            
+        
     return data
 
 # ─────────────────────── MAPEO A EXCEL (VERSIÓN FINAL) ─────────────────────────
 def map_to_excel_format(extracted_data: dict, filename: str) -> list:
     """Mapea datos extraídos al formato Excel de 55 columnas del HUV"""
+
+    # ────────────────── LISTA DE COLUMNAS DE EXCEL (CORREGIDA) ───────────────────
     EXCEL_COLUMNS = [
-        "N. peticion (0. Numero de biopsia)", "Hospitalizado", "Sede", "EPS", "Servicio",
-        "Médico tratante", "Especialidad", "Ubicación", "N. Autorizacion", "Identificador Unico",
-        "Datos Clinicos", "Fecha ordenamiento", "Tipo de documento", "N. de identificación",
-        "Primer nombre", "Segundo nombre", "Primer apellido", "Segundo apellido", "Fecha de nacimiento",
-        "Edad", "Genero", "Número celular", "Direccion de correo electronico", "Direccion de correo electronico 2",
-        "Contacto de emergencia", "Departamento", "Teléfono del contacto", "Municipio", "N. muestra",
-        "CUPS", "Tipo de examen (4, 12, Metodo de obtención de la muestra, factor de certeza para el diagnóstico)",
-        "Procedimiento (11. Tipo de estudio para el diagnóstico)", "Organo (1. Muestra enviada a patología)",
-        "Tarifa", "Valor", "Copago", "Descuento", "Fecha de ingreso (2. Fecha de la muestra)",
-        "Fecha finalizacion (3. Fecha del informe)", "Usuario finalizacion", "Usuario asignacion micro",
-        "Fecha asignacion micro", "Malignidad", "Condicion", "Descripcion macroscopica",
+        "N. peticion (0. Numero de biopsia)",
+        "Hospitalizado",
+        "Sede",
+        "EPS",
+        "Servicio",
+        "Médico tratante",
+        "Especialidad",
+        "Ubicación",
+        "N. Autorizacion",
+        "Identificador Unico",
+        "Datos Clinicos",
+        "Fecha ordenamiento",
+        "Tipo de documento",
+        "N. de identificación",
+        "Primer nombre",
+        "Segundo nombre",
+        "Primer apellido",
+        "Segundo apellido",
+        "Fecha de nacimiento",
+        "Edad",
+        "Genero",
+        "Número celular",
+        "Direccion de correo electronico",
+        "Direccion de correo electronico 2",
+        "Contacto de emergencia",
+        "Departamento",
+        "Teléfono del contacto",
+        "Municipio",
+        "N. muestra",
+        "CUPS",
+        "Tipo de examen (4, 12, Metodo de obtención de la muestra, factor de certeza para el diagnóstico)",
+        "Procedimiento (11. Tipo de estudio para el diagnóstico)",
+        "Organo (1. Muestra enviada a patología)",
+        "Tarifa",
+        "Valor",
+        "Copago",
+        "Descuento",
+        "Fecha de ingreso (2. Fecha de la muestra)",
+        "Fecha finalizacion (3. Fecha del informe)",
+        "Usuario finalizacion",
+        "Usuario asignacion micro",
+        "Fecha asignacion micro",
+        "Malignidad",
+        "Condicion",
+        "Descripcion macroscopica",
         "Descripcion microscopica (8,9, 10,12,. Invasión linfovascular y perineural, indice mitótico/Ki67, Inmunohistoquímica, tamaño tumoral)",
         "Descripcion Diagnostico (5,6,7 Tipo histológico, subtipo histológico, margenes tumorales)",
-        "Diagnostico Principal", "Comentario", "Informe adicional", "Congelaciones /Otros estudios",
-        "Liquidos (5 Tipo histologico)", "Citometria de flujo (5 Tipo histologico)", "Hora Desc. macro",
+        "Diagnostico Principal",
+        "Comentario",
+        "Informe adicional",
+        "Congelaciones /Otros estudios",
+        "Liquidos (5 Tipo histologico)",
+        "Citometria de flujo (5 Tipo histologico)",
+        "Hora Desc. macro",
         "Responsable macro"
     ]
+    # ───────────────────────────────────────────────────────────────────────────────
 
     rows = []
     specimens = extracted_data.get('specimens', []) or [{'muestra': extracted_data.get('numero_peticion', ''), 'organo': extracted_data.get('organo', '')}]
 
     for specimen in specimens:
+        # Crea un diccionario base con todas las columnas vacías
         row_data = {col: '' for col in EXCEL_COLUMNS}
 
-        # --- Mapeo de datos ---
+        # Mapea los datos extraídos a los nombres de columna correctos
         row_data["N. peticion (0. Numero de biopsia)"] = extracted_data.get('numero_peticion', '')
         row_data["Hospitalizado"] = extracted_data.get('hospitalizado', 'NO')
         row_data["Sede"] = HUV_CONFIG['sede_default']
@@ -271,7 +330,7 @@ def map_to_excel_format(extracted_data: dict, filename: str) -> list:
         row_data["Ubicación"] = extracted_data.get('servicio', '')
         row_data["N. Autorizacion"] = extracted_data.get('n_autorizacion', '')
         row_data["Identificador Unico"] = extracted_data.get('identificador_unico', '')
-        row_data["Datos Clinicos"] = 'SI' if len(extracted_data.get('descripcion_macroscopica', '')) > 50 else 'NO'
+        row_data["Datos Clinicos"] = 'SI' if len(extracted_data.get('descripcion_macroscopica', '')) > 100 else 'NO'
         row_data["Fecha ordenamiento"] = convert_date_format(extracted_data.get('fecha_ordenamiento', ''))
         row_data["Tipo de documento"] = extracted_data.get('tipo_documento', HUV_CONFIG['tipo_documento_default'])
         row_data["N. de identificación"] = extracted_data.get('identificacion_numero', '')
@@ -293,24 +352,20 @@ def map_to_excel_format(extracted_data: dict, filename: str) -> list:
         row_data["Valor"] = HUV_CONFIG['valor_default']
         row_data["Fecha de ingreso (2. Fecha de la muestra)"] = convert_date_format(extracted_data.get('fecha_ingreso', ''))
         row_data["Fecha finalizacion (3. Fecha del informe)"] = convert_date_format(extracted_data.get('fecha_informe', ''))
-        
         resp_name = extracted_data.get('responsable_analisis', '')
-        row_data["Usuario finalizacion"] = resp_name
-        
+        row_data["Usuario finalizacion"] = ' '.join(resp_name.split()[:2]) if resp_name else ''
         row_data["Malignidad"] = extracted_data.get('malignidad', 'AUSENTE')
-        
-        # --- SECCIÓN CORREGIDA ---
         row_data["Descripcion macroscopica"] = extracted_data.get('descripcion_macroscopica', '')
         row_data["Descripcion microscopica (8,9, 10,12,. Invasión linfovascular y perineural, indice mitótico/Ki67, Inmunohistoquímica, tamaño tumoral)"] = extracted_data.get('descripcion_microscopica', '')
         row_data["Descripcion Diagnostico (5,6,7 Tipo histológico, subtipo histológico, margenes tumorales)"] = extracted_data.get('diagnostico', '')
-        # CORREGIDO: Se deja la columna 'Diagnostico Principal' vacía como se requiere en el ejemplo.
-        row_data["Diagnostico Principal"] = ''
+        row_data["Diagnostico Principal"] = extracted_data.get('diagnostico', '')
         row_data["Comentario"] = extracted_data.get('comentarios', '')
-        # --- FIN DE SECCIÓN CORREGIDA ---
+        row_data["Hora Desc. macro"] = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        row_data["Responsable macro"] = ' '.join(resp_name.split()[:2]) if resp_name else ''
         
-        row_data["Hora Desc. macro"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        row_data["Responsable macro"] = resp_name
-        
+        # El DataFrame se creará con todas las columnas de EXCEL_COLUMNS,
+        # asegurando que el orden y los nombres sean siempre correctos.
+        # Los campos que no se mapean explícitamente quedarán en blanco por defecto.
         rows.append(row_data)
 
     return rows

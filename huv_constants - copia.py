@@ -1,3 +1,4 @@
+#huv_constants.py:
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Constantes compartidas para el sistema OCR HUV."""
@@ -45,7 +46,7 @@ ESPECIALIDADES_SERVICIOS = {
 # ─────────────────────── PATRONES REGEX DEFINITIVOS (VERSIÓN CORREGIDA) ───────────────────────
 PATTERNS_HUV = {
     # Información básica del paciente
-    'nombre_completo': r'Nombre\s*:\s*([^\n]+?)\s*(?:N\.\s*peticion|N\.Identificación)',
+    'nombre_completo': r'Nombre\s*:\s*([^\n]+?)\s*N\.\s*peticion',
     'numero_peticion': r'N\.\s*peticion\s*:\s*([A-Z0-9\-]+)',
     'identificacion_completa': r'N\.Identificación\s*:\s*([A-Z]{1,3}\.?\s*[0-9\.]+)',
     'identificacion_numero': r'N\.Identificación\s*:\s*[A-Z\.]{1,3}\s*([0-9\.]+)',
@@ -68,19 +69,12 @@ PATTERNS_HUV = {
     'responsable_analisis': r'([A-ZÁÉÍÓÚÑ\s]+)\s*\n\s*Responsable del análisis',
     'usuario_finalizacion': r'(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}),\s*([A-ZÁÉÍÓÚÑ\s]+)',
 
-    # --- SECCIÓN CORREGIDA ---
     # Descripciones largas
-    # CORREGIDO: Captura el resumen clínico completo y la descripción macroscópica.
-    'descripcion_macroscopica': r'Resumen de historia clínica\.([\s\S]+?)(?=DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO)',
-    
-    # Este patrón ya era robusto y se mantiene.
+    'descripcion_macroscopica': r'PROTOCOLO MACROSCÓPICO\s*\n([\s\S]+?)(?=DESCRIPCIÓN MICROSCÓPICA|DIAGN[OÓ]STICO|$)',
     'descripcion_microscopica': r'(?:DESCRIPCIÓN MICROSCÓPICA|PROTOCOLO MICROSCÓPICO)\s*\n?([\s\S]+?)(?=DIAGN[OÓ]STICO)',
-    
-    # CORREGIDO: Captura la lista completa de diagnósticos.
-    'diagnostico': r'DIAGNÓSTICO\s*\n(?:Diagnósticos anatomopatológicos:)?\s*([\s\S]+?)(?=\s*COMENTARIOS|\n\s*ARMANDO CORTES BUELVAS)',
-    
+    # LÍNEA NUEVA Y DEFINITIVA
+    'diagnostico': r'(?:^|\n)\s*DIAGN[OÓ]STICO\s*\n(Diagnósticos anatomopatológicos:)?\s*\n?([\s\S]+?)(?=\n\s*COMENTARIOS|\n\s*ARMANDO CORTES BUELVAS|Responsable del análisis|Powered by TCPDF)',
     'comentarios': r'(?:^|\n)\s*COMENTARIOS\s*\n(.+?)(?=\n\s*ARMANDO CORTES BUELVAS|Responsable del análisis|$)',
-    # --- FIN DE SECCIÓN CORREGIDA ---
 
     # Identificadores únicos en contenido
     'identificador_unico': r'Identificador Unico[^:]*:\s*(\d+)',

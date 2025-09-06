@@ -1,300 +1,82 @@
-# 📄 OCR Médico - Procesador de Informes PDF
+# OCR Médico HUV — Procesador de Informes PDF
 
-Una aplicación de escritorio desarrollada en Python para procesar informes médicos en formato PDF utilizando tecnología OCR (Reconocimiento Óptico de Caracteres). Extrae automáticamente datos estructurados de informes de inmunohistoquímica y los organiza en archivos Excel.
+Aplicación de escritorio en Python para procesar informes de Patología en PDF mediante OCR (Tesseract), extraer datos estructurados y exportarlos a Excel con formato.
 
-## 🌟 Características
+## Características
 
-- **Interfaz gráfica amigable**: Desarrollada con tkinter
-- **Procesamiento por lotes**: Procesa múltiples PDFs simultáneamente  
-- **OCR optimizado**: Utiliza Tesseract con configuración específica para documentos médicos
-- **Extracción inteligente**: Reconoce patrones específicos de informes médicos
-- **Salida estructurada**: Genera archivos Excel organizados por columnas
-- **Procesamiento en segundo plano**: No bloquea la interfaz durante el procesamiento
-- **Log detallado**: Seguimiento en tiempo real del proceso
-- **Liviano y portable**: Puede convertirse en ejecutable independiente
+- Interfaz gráfica (Tkinter) y procesamiento por lotes.
+- OCR optimizado (Tesseract) con parámetros configurables.
+- Extracción basada en regex adaptadas a informes del HUV.
+- Exportación a Excel con `pandas` y formato de encabezados con `openpyxl`.
+- Logs detallados y archivos de depuración de OCR por PDF.
 
-## 📋 Requisitos del Sistema
+## Requisitos del sistema
 
-- **Python 3.7+** (recomendado Python 3.9+)
-- **Sistema operativo**: Windows 10+, Linux Ubuntu 18+, macOS 10.14+
-- **RAM**: Mínimo 4GB (recomendado 8GB)
-- **Espacio en disco**: 500MB libres
-- **Tesseract OCR**: Engine de OCR (se instala por separado)
+- Python 3.7+ (recomendado 3.9+)
+- Windows 10+/Ubuntu 18+/macOS 10.14+
+- Tesseract OCR instalado y accesible
 
-## 🚀 Instalación Rápida
+## Instalación rápida
 
-### Método 1: Instalación Automática (Recomendado)
-
-1. **Descargar el proyecto**:
-   ```bash
-   git clone <repositorio>
-   cd ocr-medico
-   ```
-
-2. **Ejecutar el instalador automático**:
-   ```bash
-   python instalar_dependencias.py
-   ```
-
-3. **Ejecutar la aplicación**:
-   ```bash
-   python huv_ocr_sistema_definitivo.py
-   ```
-
-### Método 2: Instalación Manual
-
-1. **Instalar Python**: Descarga desde [python.org](https://python.org)
-
-2. **Instalar Tesseract OCR**:
-
-   **Windows**:
-   - Descarga desde [UB-Mannheim Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
-   - Instala y anota la ruta (ej: `C:\Program Files\Tesseract-OCR\`)
-
-    **Linux (Ubuntu/Debian)**:
-    Ejecuta manualmente:
-    ```bash
-    sudo apt-get update
-    sudo apt-get install tesseract-ocr tesseract-ocr-spa poppler-utils
-    ```
-
-   **macOS**:
-   ```bash
-   brew install tesseract tesseract-lang poppler
-   ```
-
-3. **Instalar dependencias de Python**:
-   ```bash
-    pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
-   ```
-
-## 🔧 Configuración
-
-### Configurar Ruta de Tesseract
-
-
-- **Windows**: establece `WINDOWS_TESSERACT` con la ruta completa a `tesseract.exe`.
-- **Linux**: ajusta `LINUX_TESSERACT` con la ruta absoluta o deja `tesseract` si está en el `PATH`.
-- **macOS**: cambia `MACOS_TESSERACT` con la ruta donde Homebrew instaló el binario (`/usr/local/bin/tesseract` o `/opt/homebrew/bin/tesseract`).
-
-También puedes definir estas rutas mediante variables de entorno (`WINDOWS_TESSERACT`, `LINUX_TESSERACT` o `MACOS_TESSERACT`).
-
-### Verificar Instalación
-
+Opción A — Automática:
 ```bash
-tesseract --version
-python -c "import pytesseract, fitz, PIL, pandas, openpyxl, dateutil; print('✅ Todas las dependencias instaladas')"
+python instalar_dependencias.py
 ```
 
-## 📖 Manual de Uso
+Opción B — Manual:
+```bash
+pip install -r requirements.txt
+# Instala Tesseract según tu SO (ver INICIO_RAPIDO.md)
+```
 
-### 1. Iniciar la Aplicación
-
+Ejecutar la app:
 ```bash
 python huv_ocr_sistema_definitivo.py
 ```
 
-### 2. Agregar Archivos PDF
+## Configuración
 
-**Opción A - Archivos individuales**:
-- Clic en "🗂️ Agregar Archivos PDF"
-- Selecciona uno o varios archivos PDF
-- Se agregarán a la lista
+Edita `config.ini`:
+- `[PATHS]`: Rutas a `tesseract` por sistema (o deja vacío si está en PATH).
+- `[OCR_SETTINGS]`: `DPI`, `PSM_MODE`, `LANGUAGE`, `OCR_CONFIG`.
+- `[PROCESSING]`: Rango de páginas y tamaño mínimo.
+- `[OUTPUT]`: Formato de nombre de archivo de salida.
+- `[INTERFACE]`: Dimensiones de ventana y altura de log.
 
-**Opción B - Carpeta completa**:
-- Clic en "📁 Agregar Carpeta" 
-- Selecciona una carpeta
-- Se agregarán todos los PDFs de la carpeta
-
-### 3. Configurar Salida
-
-- Clic en "📂 Seleccionar Carpeta de Salida"
-- Elige donde guardar el archivo Excel resultante
-
-### 4. Procesar Documentos
-
-- Clic en "🚀 Procesar PDFs"
-- Observa el progreso en la barra y en el log
-- Al finalizar, se mostrará la ubicación del archivo Excel
-
-### 5. Revisar Resultados
-
-El archivo Excel generado contiene estas columnas:
-
-| Campo | Descripción |
-|-------|-------------|
-| `archivo_origen` | Nombre del PDF procesado |
-| `nombre` | Nombre del paciente |
-| `numero_peticion` | Número de petición del estudio |
-| `identificacion` | Documento de identidad |
-| `genero` | Género del paciente |
-| `edad` | Edad del paciente |
-| `eps` | Entidad de salud |
-| `medico_tratante` | Médico responsable |
-| `servicio` | Servicio médico |
-| `fecha_ingreso` | Fecha de ingreso |
-| `fecha_informe` | Fecha del informe |
-| `organo` | Órgano estudiado |
-| `receptores_estrogeno` | Resultado receptores de estrógeno |
-| `receptores_progesterona` | Resultado receptores de progesterona |
-| `her2` | Resultado HER2 |
-| `ki67` | Índice de proliferación Ki-67 |
-| `patologo` | Patólogo responsable |
-| `fecha_procesamiento` | Cuando se procesó el documento |
-
-## 🔧 Crear Ejecutable (Opcional)
-
-Para crear un archivo `.exe` que funcione sin instalar Python:
-
-1. **Instalar PyInstaller**:
-   ```bash
-   pip install pyinstaller
-   ```
-
-2. **Crear el ejecutable**:
-   ```bash
-   pyinstaller --onefile --windowed --name="OCR_Medico" huv_ocr_sistema_definitivo.py
-   ```
-
-3. **Encontrar el ejecutable**:
-   - Se crea en la carpeta `dist/`
-   - Archivo: `OCR_Medico.exe` (Windows) o `OCR_Medico` (Linux/Mac)
-
-4. **Distribuir**:
-   - Copia el ejecutable a cualquier computadora
-   - **Importante**: Tesseract OCR debe estar instalado en la máquina destino
-
-## 🛠️ Solución de Problemas
-
-### Error: "Tesseract not found"
-
-**Solución**:
-- Verifica que Tesseract esté instalado: `tesseract --version`
-- En Windows, ajusta la ruta en el código
-- Agrega Tesseract al PATH del sistema
-
-### Error: "No module named 'pytesseract'"
-
-**Solución**:
+Verificación:
 ```bash
-pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
+tesseract --version
+python -c "import pytesseract, fitz, PIL, pandas, openpyxl, dateutil; print('OK')"
 ```
 
-### Error: "Permission denied" o problemas de permisos
+## Uso
 
-**Solución**:
-- Ejecuta como administrador (Windows) o con `sudo` (Linux/Mac)
-- Verifica permisos de las carpetas de entrada y salida
+1) Agrega PDFs (archivos o carpeta).
+2) Selecciona carpeta de salida.
+3) Procesa y revisa el Excel generado.
 
-### PDFs no se procesan correctamente
+El Excel aplica formato de encabezados y ajuste de columnas automáticamente.
 
-**Solución**:
-- Verifica que los PDFs no estén corruptos
-- Asegúrate de que sean informes médicos con texto legible
-- Aumenta la resolución de DPI en el código (línea con `convert_from_path`)
+## Arquitectura y análisis completo
 
-### Resultados de OCR imprecisos
+Consulta la documentación técnica en `analisis/`:
+- `analisis/README.md` — índice y hojas por componente.
 
-**Solución**:
-- Verifica la calidad del PDF original
-- Los mejores resultados se obtienen con PDFs de alta resolución
-- Documentos escaneados pueden requerir preprocesamiento adicional
+## Crear ejecutable (opcional)
 
-### Error de memoria con PDFs grandes
-
-**Solución**:
-- Procesa archivos en lotes más pequeños
-- Cierra otras aplicaciones para liberar RAM
-- Considera usar una máquina con más memoria
-
-## 📝 Tipos de Documentos Soportados
-
-La aplicación está optimizada para informes de **inmunohistoquímica** que contengan:
-
-- Datos del paciente (nombre, identificación, edad, etc.)
-- Información del estudio (fechas, médico, servicio)
-- Resultados de biomarcadores (receptores de estrógeno, progesterona, HER2, Ki-67)
-- Diagnóstico y patólogo responsable
-
-Para otros tipos de informes médicos, es necesario modificar las expresiones regulares en la función `extract_medical_data()`.
-
-## 🔄 Personalización
-
-### Modificar Campos Extraídos
-
-Edita la función `extract_medical_data()` en `huv_ocr_sistema_definitivo.py`:
-
-```python
-# Agregar nuevos patrones
-patterns = {
-    'nuevo_campo': r'Patrón de búsqueda: ([^\n]+)',
-    # ... otros patrones
-}
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed --name=OCR_Medico huv_ocr_sistema_definitivo.py
 ```
+El ejecutable requiere Tesseract instalado en la máquina destino.
 
-### Cambiar Configuración de OCR
+## Solución de problemas
 
-Modifica la línea de configuración de Tesseract:
+- “Tesseract not found”: Instala Tesseract y configura `config.ini` o PATH.
+- “No module named ...”: `pip install -r requirements.txt`.
+- OCR pobre: aumenta `DPI`, revisa calidad del PDF, considera preprocesar.
 
-```python
-# Configuración actual
-config = '--psm 6 -c tessedit_char_whitelist=...'
+## Notas
 
-# Otras opciones útiles:
-# --psm 3: Completamente automático (por defecto)
-# --psm 6: Un bloque uniforme de texto
-# --psm 11: Texto disperso
-```
+- Este repositorio contiene regex y mapeos específicos del HUV. Cambios en los formatos de informe requieren actualizar `huv_constants.PATTERNS_HUV`.
 
-## 📊 Rendimiento
-
-### Tiempos Estimados
-
-- **1 PDF (2 páginas)**: 15-30 segundos
-- **10 PDFs**: 3-5 minutos  
-- **50 PDFs**: 15-25 minutos
-
-*Los tiempos varían según la potencia del procesador y calidad de los PDFs*
-
-### Optimización
-
-- **DPI**: Balance entre calidad y velocidad (300 DPI recomendado)
-- **Páginas**: Procesa solo las páginas necesarias (1-2 por defecto)
-- **Resolución**: Las imágenes se redimensionan automáticamente
-
-## 🤝 Contribuir
-
-¿Quieres mejorar la aplicación?
-
-1. Fork el repositorio
-2. Crea una rama: `git checkout -b mi-mejora`
-3. Realiza cambios y confirma: `git commit -m 'Agregar nueva característica'`
-4. Push: `git push origin mi-mejora`
-5. Crear Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
-
-## 🆘 Soporte
-
-¿Necesitas ayuda?
-
-- 📧 **Email**: [tu-email@ejemplo.com]
-- 🐛 **Issues**: Reporta bugs en el repositorio
-- 💬 **Discusiones**: Usa las discusiones del repositorio
-
-## 🏆 Créditos
-
-Desarrollado por **[Tu Nombre]** con:
-
-- **Tesseract OCR**: Google's open-source OCR engine
-- **pytesseract**: Python wrapper for Tesseract
-- **tkinter**: Python's standard GUI library
-- **pandas & openpyxl**: Data processing and Excel generation
-
----
-
-⭐ **¿Te gusta el proyecto?** ¡Dale una estrella en GitHub!
-
-**Última actualización**: $(date +'%Y-%m-%d')

@@ -1,72 +1,61 @@
-# 🚀 Guía de Inicio Rápido - OCR Médico
+# Guía de Inicio Rápido — OCR Médico HUV
 
-## ⚡ Instalación Express (5 minutos)
+## Instalación Express (5 minutos)
 
 ### Windows
 ```cmd
-# 1. Descargar e instalar Tesseract OCR
+# 1) Descargar e instalar Tesseract OCR
 # https://github.com/UB-Mannheim/tesseract/wiki
 
-# 2. Instalar dependencias de Python
-pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
+# 2) Instalar dependencias de Python
+pip install -r requirements.txt
 
-# 3. Ejecutar aplicación
+# 3) Ejecutar la aplicación
 python huv_ocr_sistema_definitivo.py
 ```
 
 ### Linux (Ubuntu/Debian)
 ```bash
-# 1. Instalar Tesseract y dependencias del sistema
-# Ejecuta manualmente:
 sudo apt-get update
 sudo apt-get install tesseract-ocr tesseract-ocr-spa poppler-utils
-
-# 2. Instalar dependencias de Python
-pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
-
-# 3. Ejecutar aplicación
+pip install -r requirements.txt
 python huv_ocr_sistema_definitivo.py
 ```
 
 ### macOS
 ```bash
-# 1. Instalar Tesseract
 brew install tesseract tesseract-lang poppler
-
-# 2. Instalar dependencias de Python
-pip install pytesseract PyMuPDF pillow pandas openpyxl python-dateutil
-
-# 3. Ejecutar aplicación
+pip install -r requirements.txt
 python huv_ocr_sistema_definitivo.py
 ```
 
-## 🖱️ Uso en 3 Pasos
+## Uso en 3 pasos
 
-1. **📂 Agregar PDFs**: Clic en "Agregar Archivos" o "Agregar Carpeta"
-2. **💾 Elegir destino**: Clic en "Seleccionar Carpeta de Salida" 
-3. **🚀 Procesar**: Clic en "Procesar PDFs" y esperar
+1) Agregar PDFs: “Agregar Archivos” o “Agregar Carpeta”.
+2) Elegir destino: “Seleccionar Carpeta de Salida”.
+3) Procesar: “Procesar PDFs”.
 
-## ✅ Verificación Rápida
+## Verificación rápida
 
-```python
-# Ejecutar para probar el sistema
+```bash
 python test_sistema.py
 ```
 
-## 🔧 Solución de Problemas Comunes
+## Problemas comunes
 
 | Problema | Solución |
-|----------|----------|
-| "Tesseract not found" | Instalar Tesseract OCR y agregarlo al PATH |
-| "No module named ..." | `pip install -r requirements.txt` |
-| Resultados imprecisos | Verificar calidad del PDF original |
-| Proceso muy lento | Usar PDFs de menos de 5MB, cerrar otras apps |
+|---|---|
+| Tesseract not found | Instalar Tesseract y agregar al PATH o configurar en config.ini |
+| No module named ... | `pip install -r requirements.txt` |
+| Resultados imprecisos | Aumentar DPI en config.ini, revisar calidad del PDF |
+| Lento con PDFs grandes | Procesar por lotes pequeños, cerrar otras apps |
 
-## 📊 Rendimiento Esperado
+## Rendimiento esperado
 
-- **1 PDF (2 páginas)**: ~30 segundos
-- **10 PDFs**: ~5 minutos
-- **Precisión**: 85-95% (dependiendo de calidad del documento)
+- 1 PDF (2 páginas): ~30 s
+- 10 PDFs: ~5 min
+- Precisión: 85–95% (según calidad del documento)
 
 ---
-💡 **Para más detalles**: Ver README.md completo
+Para más detalles técnicos: `analisis/README.md`
+

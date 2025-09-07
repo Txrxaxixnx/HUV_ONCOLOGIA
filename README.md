@@ -79,3 +79,10 @@ El ejecutable requiere Tesseract instalado en la maquina destino.
 ## Notas
 
 - Este repositorio contiene regex y mapeos especificos del HUV. Cambios en los formatos de informe requieren actualizar `huv_constants.PATTERNS_HUV`.
+
+## Plantillas y procesadores
+
+- Base actual: el sistema está perfectamente parametrizado para informes del HUV, con especial énfasis en plantillas de Autopsias, usando patrones robustos en `huv_constants.PATTERNS_HUV` y la orquestación en `data_extraction.py`.
+- Evolución: se está creando un sistema de “procesadores” por tipo de informe en `processors/` (por ejemplo, `autopsy_processor.py`, `ihq_processor.py`) para facilitar integrar nuevas plantillas (BIÓPSIA, CITOLOGÍA, revisiones externas, etc.).
+- Estado: los módulos en `processors/` son prototipos. Sirven de guía para separar patrones y reglas por tipo y favorecer extensibilidad futura. La extracción estable sigue usando `PATTERNS_HUV` desde `data_extraction.extract_huv_data`.
+- Cómo contribuir: ver `analisis/13_processors.md` para pautas y ejemplos al añadir procesadores y plantillas nuevas.

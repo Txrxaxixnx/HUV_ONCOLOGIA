@@ -13,7 +13,9 @@
 
 ## Interaccion
 - Importado por `data_extraction.py` para toda la logica de extraccion.
+- En los prototipos de `processors/` se hace referencia a una futura `PATTERNS_BASE` (base común). Por ahora, esa base práctica es `PATTERNS_HUV` y la migración se realizará cuando la modularización esté consolidada.
 
 ## Sugerencias
 - Consolidar pruebas de regresion cuando se modifique `PATTERNS_HUV`.
 - Centralizar normalizaciones de mayusculas/acento si se anaden mas tablas.
+- Planificar refactor hacia `PATTERNS_BASE` para compartir lo común entre tipos de informe y permitir sobreescrituras por procesador.

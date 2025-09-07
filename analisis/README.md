@@ -15,5 +15,6 @@ Este directorio contiene un desglose completo y didactico de cada componente del
 - 10_config_ini.md - Parametros y efectos
 - 11_requirements_y_dependencias.md - Dependencias Python y del sistema
 - 12_datos_y_artefactos.md - Datos de ejemplo y artefactos
+- 13_processors.md - Sistema de procesadores por plantilla (prototipos)
 
 Sugerencias de mejora y riesgos conocidos se incluyen en cada archivo correspondiente.

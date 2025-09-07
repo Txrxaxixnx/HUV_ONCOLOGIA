@@ -20,6 +20,10 @@
 - `extract_huv_data(text)`: Orquesta la extraccion usando `PATTERNS_HUV` y las utilidades, y arma un dict normalizado.
 - `map_to_excel_format(extracted_data, filename)`: Construye filas con el orden y nombres exigidos por HUV para exportar a Excel.
 
+## Relación con `processors/` (prototipos)
+- Actualmente, `extract_huv_data` concentra la extracción estable usando `PATTERNS_HUV`.
+- Los prototipos en `processors/` muestran cómo separar reglas por tipo (Autopsia, IHQ). A futuro, `extract_huv_data` podrá enrutar al procesador específico tras `detect_report_type`, manteniendo este módulo como orquestador y mapeador a Excel.
+
 ## `PATTERNS_HUV` (desde `huv_constants.py`)
 - Conjunto de regex adaptadas al layout de los informes (encabezados como Nombre, N. peticion, N.Identificacion, Servicio, etc.).
 - Puntos criticos:

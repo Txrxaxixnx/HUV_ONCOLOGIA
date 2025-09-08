@@ -35,6 +35,14 @@ python huv_ocr_sistema_definitivo.py
 2) Elegir destino: "Seleccionar Carpeta de Salida".
 3) Procesar: "Procesar PDFs".
 
+### Procesadores especializados (opcional)
+Puedes ejecutar los procesadores individuales por tipo:
+```bash
+python procesador_ihq.py
+python procesador_biopsia.py
+python procesador_revision.py
+```
+
 ## Verificacion rapida
 
 ```bash

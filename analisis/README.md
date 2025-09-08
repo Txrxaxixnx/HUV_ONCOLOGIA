@@ -15,6 +15,10 @@ Este directorio contiene un desglose completo y didactico de cada componente del
 - 10_config_ini.md - Parametros y efectos
 - 11_requirements_y_dependencias.md - Dependencias Python y del sistema
 - 12_datos_y_artefactos.md - Datos de ejemplo y artefactos
-- 13_processors.md - Sistema de procesadores por plantilla (prototipos)
+- 13_processors.md - Sistema de procesadores por plantilla
+- 14_integracion_procesadores.md - Plan de integración al flujo principal
+- 15_procesador_ihq.md - Detalles del procesador IHQ
+- 16_procesador_biopsia.md - Detalles del procesador de Biopsia
+- 17_procesador_revision.md - Detalles del procesador de Revisión
 
 Sugerencias de mejora y riesgos conocidos se incluyen en cada archivo correspondiente.

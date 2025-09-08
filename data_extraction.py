@@ -7,9 +7,6 @@ import re
 import unicodedata
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
-from huv_constants import PATTERNS_AUTOPSIA  # Importamos los patrones de autopsia con su nuevo nombre
-# IMPORTANTE: Importamos la nueva función especialista en IHQ
-from ihq_extraction import extract_ihq_data
 from huv_constants import (
     HUV_CONFIG,
     CUPS_CODES,

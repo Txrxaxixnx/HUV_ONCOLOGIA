@@ -87,10 +87,11 @@ Descripción detallada en `analisis/15_procesador_ihq.md`, `analisis/16_procesad
 - Artefactos de texto OCR por PDF (carpeta `EXCEL/` en ejemplos y en carpeta de salida del usuario).
 - PDFs de ejemplo en `pdfs_patologia/`.
 
-## Plan de Integración de Procesadores
-- Enrutar automáticamente en `data_extraction` según tipo detectado; usar mapeadores propios o el genérico según el caso.
-- Bandera de activación en `config.ini` para despliegue gradual.
-- Detalles en `analisis/14_integracion_procesadores.md`.
+## Integración de Procesadores
+- Enrutador activo: `data_extraction.process_text_to_excel_rows` detecta tipo y delega a procesadores (IHQ, Biopsia, Revisión) cuando están habilitados.
+- Fallback: se mantiene `extract_huv_data` + `map_to_excel_format` para tipos no soportados o cuando se deshabilita.
+- Bandera de activación: `[PROCESSORS].ENABLE_PROCESSORS` en `config.ini` (true/false).
+- Más detalles: `analisis/14_integracion_procesadores.md`.
 
 ## Limitaciones Actuales
 - Dependencia de layouts y encabezados: cambios de plantilla requieren actualizar regex.
@@ -118,4 +119,3 @@ Descripción detallada en `analisis/15_procesador_ihq.md`, `analisis/16_procesad
 
 ## Conclusión
 El proyecto ofrece un pipeline robusto y extensible para procesar informes de Patología del HUV, con una base estable y procesadores especializados listos para integrarse. La documentación y el plan de integración facilitan su evolución y despliegue controlado, maximizando precisión y manteniendo la mantenibilidad a largo plazo.
-

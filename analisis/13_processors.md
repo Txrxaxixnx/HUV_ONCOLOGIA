@@ -14,9 +14,10 @@
   - Genera Excel con encabezados formateados (openpyxl).
 
 ## Integración con el flujo principal
-- Ruta estable actual: `data_extraction.extract_huv_data` + `huv_constants.PATTERNS_HUV`.
-- Plan: enrutar automáticamente según `detect_report_type(text)` hacia el procesador correspondiente manteniendo compatibilidad con el mapeo a Excel.
-- Ver detalles en `analisis/14_integracion_procesadores.md`.
+- La app enruta por tipo usando `data_extraction.process_text_to_excel_rows`.
+- Fallback: `extract_huv_data` + `PATTERNS_HUV` se mantiene cuando el procesador no existe o está deshabilitado.
+- Control: `[PROCESSORS].ENABLE_PROCESSORS` en `config.ini`.
+- Ver también `analisis/14_integracion_procesadores.md`.
 
 ## Interfaz propuesta por procesador
 Todo procesador debería exponer, como mínimo, estas funciones:
@@ -45,4 +46,3 @@ Todo procesador debería exponer, como mínimo, estas funciones:
 ## Relación con `huv_constants.PATTERNS_HUV`
 - `PATTERNS_HUV` es hoy la base funcional probada para informes del HUV.
 - Se propone extraer una `PATTERNS_BASE` común y permitir sobreescrituras por tipo en cada procesador.
-

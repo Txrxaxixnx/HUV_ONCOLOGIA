@@ -42,6 +42,12 @@
 - Genera una fila por especimen detectado.
 - Aplica valores por defecto de `HUV_CONFIG` cuando corresponde.
 
+## Integración con procesadores especializados
+- `process_text_to_excel_rows(text, filename)`: función de alto nivel que detecta el tipo y enruta hacia:
+  - Procesadores especializados (IHQ, Biopsia, Revisión) si `[PROCESSORS].ENABLE_PROCESSORS=true` y el procesador está disponible.
+  - La ruta base (`extract_huv_data` + `map_to_excel_format`) en caso contrario.
+- Permite activar/desactivar la integración desde `config.ini` sin cambiar código.
+
 ## Riesgos y recomendaciones
 - Los patrones regex dependen del formato del PDF; cambios de plantilla requieren actualizar `PATTERNS_HUV`.
 - Unificar codificacion UTF-8 en repo para evitar mojibake.

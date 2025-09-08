@@ -13,8 +13,9 @@ Este documento explica, de manera ejecutiva, como esta organizado el proyecto, c
 2) Por cada PDF:
    - Se renderiza cada pagina con PyMuPDF (`ocr_processing.pdf_to_text_enhanced`).
    - Se aplica OCR con Tesseract para obtener texto.
-   - Se analizan patrones especificos del HUV para estructurar datos (`data_extraction.extract_huv_data`).
-   - Se mapea a filas de Excel (`data_extraction.map_to_excel_format`).
+   - Se enruta el texto a `data_extraction.process_text_to_excel_rows`:
+     - Si hay procesador especializado (IHQ, Biopsia, Revisión) y está habilitado en `config.ini`, se usa.
+     - En caso contrario, se usa la ruta base (`extract_huv_data` + `map_to_excel_format`).
 3) Se genera un `.xlsx` con `pandas` y `openpyxl` y se aplican estilos a encabezados.
 
 ## Componentes principales

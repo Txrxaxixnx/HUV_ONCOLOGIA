@@ -73,7 +73,9 @@ python procesador_revision.py
 ```
 
 - Estado: los procesadores funcionan de forma individual y aplican reglas específicas de negocio y mapeos a Excel.
-- Integración al flujo principal: ver `analisis/13_processors.md` y el plan en `analisis/14_integracion_procesadores.md`.
+- Integración al flujo principal: la app enruta automáticamente por tipo mediante `process_text_to_excel_rows`.
+  - Control por configuración: `[PROCESSORS].ENABLE_PROCESSORS = true|false` en `config.ini`.
+  - Más detalles: `analisis/13_processors.md` y `analisis/14_integracion_procesadores.md`.
 
 ## Arquitectura y análisis
 
@@ -97,4 +99,3 @@ El ejecutable requiere Tesseract instalado en la máquina destino.
 ## Notas
 
 - Este repositorio contiene regex y mapeos específicos del HUV. Cambios en los formatos de informe requieren actualizar `huv_constants.PATTERNS_HUV`.
-

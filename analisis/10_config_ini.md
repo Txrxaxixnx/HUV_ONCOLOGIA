@@ -13,6 +13,11 @@
 - `[INTERFACE]`:
   - Tamano de ventana y altura del log.
 
+## Nueva sección `[PROCESSORS]`
+- `ENABLE_PROCESSORS`: `true|false` para activar la integración con procesadores especializados (IHQ, Biopsia, Revisión).
+  - Cuando `true`, el sistema enruta automáticamente el texto OCR al procesador según `detect_report_type`.
+  - Cuando `false`, usa siempre la ruta base (`extract_huv_data` + `map_to_excel_format`).
+
 ## Efecto en el sistema
 - `huv_ocr_sistema_definitivo.py` y `ocr_processing.py` leen estas claves al inicio de la ejecucion.
 - Cambios se reflejan sin recompilar.

@@ -7,6 +7,8 @@ import re
 import unicodedata
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
+import configparser
+from pathlib import Path
 from huv_constants import (
     HUV_CONFIG,
     CUPS_CODES,
@@ -15,6 +17,27 @@ from huv_constants import (
     PATTERNS_HUV,
     MALIGNIDAD_KEYWORDS,
 )
+
+# Configuración para habilitar enrutamiento a procesadores especializados
+_config = configparser.ConfigParser(interpolation=None)
+_config.read(Path(__file__).resolve().parent / 'config.ini', encoding='utf-8')
+ENABLE_PROCESSORS = _config.getboolean('PROCESSORS', 'ENABLE_PROCESSORS', fallback=True)
+
+# Importación opcional de procesadores especializados
+try:
+    import procesador_ihq as _proc_ihq
+except Exception:
+    _proc_ihq = None
+
+try:
+    import procesador_biopsia as _proc_biopsia
+except Exception:
+    _proc_biopsia = None
+
+try:
+    import procesador_revision as _proc_revision
+except Exception:
+    _proc_revision = None
 
 # ─────────────────────── FUNCIONES DE UTILIDAD ─────────────────────────
 
@@ -314,3 +337,36 @@ def map_to_excel_format(extracted_data: dict, filename: str) -> list:
         rows.append(row_data)
 
     return rows
+
+
+def process_text_to_excel_rows(text: str, filename: str) -> list:
+    """Devuelve filas mapeadas a Excel usando procesadores si están habilitados.
+    Fallback a la ruta base estable si no hay procesador disponible.
+    """
+    tipo = detect_report_type(text or '')
+
+    if ENABLE_PROCESSORS:
+        if tipo == 'INMUNOHISTOQUIMICA' and _proc_ihq is not None:
+            try:
+                data = _proc_ihq.extract_ihq_data(text)
+                return _proc_ihq.map_to_excel_format(data)
+            except Exception:
+                pass
+        if tipo == 'BIOPSIA' and _proc_biopsia is not None:
+            try:
+                common = _proc_biopsia.extract_biopsy_data(text)
+                num = common.get('numero_peticion', '')
+                specimens = _proc_biopsia.extract_specimens_data(text, num)
+                return _proc_biopsia.map_to_excel_format(common, specimens)
+            except Exception:
+                pass
+        if tipo == 'REVISION' and _proc_revision is not None:
+            try:
+                data = _proc_revision.extract_revision_data(text)
+                return _proc_revision.map_to_excel_format(data)
+            except Exception:
+                pass
+
+    # Fallback base
+    extracted_data = extract_huv_data(text)
+    return map_to_excel_format(extracted_data, filename)

@@ -15,7 +15,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, Alignment, PatternFill
 
 from ocr_processing import pdf_to_text_enhanced
-from data_extraction import extract_huv_data, map_to_excel_format
+from data_extraction import process_text_to_excel_rows, detect_report_type
 
 _config = configparser.ConfigParser(interpolation=None)
 _config.read(Path(__file__).resolve().parent / "config.ini", encoding="utf-8")
@@ -282,7 +282,9 @@ class HUVOCRSystem:
                     self._log("   ⚠️  Advertencia: No se extrajo texto del PDF")
                     continue
                 self._log("   📊 Extrayendo datos estructurados...")
-                extracted_data = extract_huv_data(pdf_text)
+                tipo_informe = detect_report_type(pdf_text)
+                excel_rows = process_text_to_excel_rows(pdf_text, filename)
+                extracted_data = {'tipo_informe': tipo_informe, 'specimens': [None] * len(excel_rows)}
                 # ----- INICIO DE CÓDIGO DE DEPURACIÓN DE MALIGNIDAD -----
                 print(f"\n--- DEBUG: {filename} ---")
                 diagnostico_texto = extracted_data.get('diagnostico', '¡¡¡DIAGNÓSTICO NO ENCONTRADO!!!')
@@ -301,6 +303,7 @@ class HUVOCRSystem:
                 if extracted_data.get('servicio_normalizado'):
                     self._log("   🔧 Servicio normalizado")
                 self._log("   📋 Mapeando a formato Excel...")
+                map_to_excel_format = lambda *args, **kwargs: excel_rows
                 excel_rows = map_to_excel_format(extracted_data, filename)
                 all_rows.extend(excel_rows)
                 processed_count += 1

@@ -12,7 +12,7 @@ venv1/
 env/
 .venv/
 .env/
-
+PROYECTO VISUAL/
 # 2. Caché y archivos generados por Python
 # La carpeta __pycache__ contiene archivos .pyc que son versiones compiladas
 # (bytecode) de tu código. Python los genera automáticamente para acelerar la ejecución.

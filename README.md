@@ -2,6 +2,11 @@
 
 Aplicación de escritorio en Python para procesar informes de Patología del HUV en PDF mediante OCR (Tesseract), extraer datos estructurados y exportarlos a Excel con formato profesional.
 
+## Autoría
+
+- Proyecto institucional del Hospital Universitario del Valle (HUV), desarrollado por el Área de Innovación y Desarrollo.
+- Dirección médica: Jefe Médico de Oncología, Dr. Juan Camilo Bayona.
+
 ## Características
 
 - Interfaz gráfica (Tkinter) y procesamiento por lotes.
@@ -61,21 +66,37 @@ El Excel aplica formato de encabezados y ajuste de columnas automáticamente.
 
 Además de la app principal, el proyecto incluye procesadores independientes por tipo de informe. Funcionan de forma autónoma y generan un Excel listo para uso.
 
+- `procesador_autopsia.py`: Autopsias (principal, una muestra/“Cuerpo humano completo”)
 - `procesador_ihq.py`: Inmunohistoquímica (IHQ)
 - `procesador_biopsia.py`: Biopsias con múltiples especímenes (A., B., C.)
 - `procesador_revision.py`: Revisiones de casos externos (R)
 
 Ejecución (abre un selector de archivo PDF):
 ```bash
+python procesador_autopsia.py
 python procesador_ihq.py
 python procesador_biopsia.py
 python procesador_revision.py
 ```
 
 - Estado: los procesadores funcionan de forma individual y aplican reglas específicas de negocio y mapeos a Excel.
-- Integración al flujo principal: la app enruta automáticamente por tipo mediante `process_text_to_excel_rows`.
+- Integración al flujo principal: la app enruta automáticamente por tipo mediante `process_text_to_excel_rows` (Autopsia, IHQ, Biopsia, Revisión).
   - Control por configuración: `[PROCESSORS].ENABLE_PROCESSORS = true|false` en `config.ini`.
   - Más detalles: `analisis/13_processors.md` y `analisis/14_integracion_procesadores.md`.
+
+## Roadmap de integración con SERVINTE
+
+- Envío automático de datos a SERVINTE (en diseño):
+  - Exportación por lotes en formato interoperable (CSV/API según disponibilidad).
+  - Validación previa, reintentos, y bitácora de auditoría por registro.
+  - Modo “seco” (dry-run) para verificación sin impacto productivo.
+  - Configurable por `config.ini` (activar/desactivar, endpoints, autenticación).
+  - Más detalles: ver `SERVINTE_PLAN.md`.
+
+## Más información
+
+- Informe global del proyecto (visión, arquitectura, roadmap): `INFORME_GLOBAL_PROYECTO.md`
+- Historial de cambios: `CHANGELOG.md`
 
 ## Arquitectura y análisis
 

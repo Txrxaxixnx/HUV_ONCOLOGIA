@@ -1,5 +1,7 @@
 # Guia de Inicio Rapido - OCR Medico HUV
 
+Proyecto institucional del Hospital Universitario del Valle (HUV), desarrollado por el Área de Innovación y Desarrollo, bajo la dirección médica del Jefe de Oncología, Dr. Juan Camilo Bayona.
+
 ## Instalacion Express (5 minutos)
 
 ### Windows
@@ -38,6 +40,7 @@ python huv_ocr_sistema_definitivo.py
 ### Procesadores especializados (opcional)
 Puedes ejecutar los procesadores individuales por tipo:
 ```bash
+python procesador_autopsia.py
 python procesador_ihq.py
 python procesador_biopsia.py
 python procesador_revision.py

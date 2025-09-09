@@ -39,6 +39,11 @@ try:
 except Exception:
     _proc_revision = None
 
+try:
+    import procesador_autopsia as _proc_autopsia
+except Exception:
+    _proc_autopsia = None
+
 # ─────────────────────── FUNCIONES DE UTILIDAD ─────────────────────────
 
 def detect_report_type(text: str) -> str:
@@ -346,6 +351,12 @@ def process_text_to_excel_rows(text: str, filename: str) -> list:
     tipo = detect_report_type(text or '')
 
     if ENABLE_PROCESSORS:
+        if tipo == 'AUTOPSIA' and _proc_autopsia is not None:
+            try:
+                data = _proc_autopsia.extract_autopsia_data(text)
+                return _proc_autopsia.map_to_excel_format(data)
+            except Exception:
+                pass
         if tipo == 'INMUNOHISTOQUIMICA' and _proc_ihq is not None:
             try:
                 data = _proc_ihq.extract_ihq_data(text)

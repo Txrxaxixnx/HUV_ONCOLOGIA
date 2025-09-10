@@ -131,6 +131,59 @@ def deduce_specialty_ihq(servicio: str) -> str:
 # ─────────────────────── EXTRACCIÓN Y MAPEO ─────────────────────────
 # (En la sección de EXTRACCIÓN Y MAPEO)
 
+"""
+Fase 2 – Prototipos (IHQ) para nuevos biomarcadores y campos
+
+Objetivo
+- Servir como guía de implementación para extraer valores de biomarcadores a partir del texto OCR, coherente con analisis/01_ESQUEMA_DE_DATOS.md.
+
+Ubicación sugerida de búsqueda
+- Priorizar secciones “RESULTADO DE INMUNOHISTOQUÍMICA” y “DESCRIPCIÓN MICROSCÓPICA”.
+- Usar fallback al documento completo si no se encuentra en secciones prioritarias.
+
+Normalización general
+- Ignorar acentos y mayúsculas (usar `re.IGNORECASE` y normalización).
+- Unificar alias: "SOX 10"→"SOX10", "PD L1"→"PD-L1", "Ki 67"→"Ki-67".
+
+Regex/heurísticas propuestas
+- Estudios Solicitados:
+  - Patrón: `(?i)estudios\s+solicitados:?\s*(?:se\s+realiz[oó]\s+tinci[oó]n\s+especial\s+para\s*)?([A-Z0-9 ,+/\.-]+)`
+  - Post: dividir por comas/espacios, limpiar tokens, devolver lista normalizada.
+- P16 (Estado/Porcentaje):
+  - Estado: `(?i)\bP\s*16\b[^\n]*\b(positiv[oa]|negativ[oa])\b`
+  - Porcentaje: `(?i)\bP\s*16\b[^\n%]*?(\d{1,3})\s*%`
+  - Heurística: si aparece “en bloque/difusa”, tratar como POSITIVO.
+- HER2 (score ± ISH/FISH):
+  - Score: `(?i)\bHER2(?:/neu)?\b\s*[:\-]?\s*(0|1\+|2\+|3\+)`
+  - ISH/FISH: `(?i)\b(?:ISH|FISH)\b[^\n]*\b(amplificad[oa]|no\s*amplificad[oa])\b`
+- Ki-67 (porcentaje):
+  - `(?i)\bK[il]\s*[- ]?67\b[^\n%]*?(\d{1,3})\s*%`
+- RE/ER (estado y %):
+  - Estado: `(?i)(receptor(?:\s+hormonal)?\s+de\s+estr(?:o|ó)geno|\bER\b)[^\n]*\b(positiv[oa]|negativ[oa])\b`
+  - %: `(?i)(receptor(?:\s+hormonal)?\s+de\s+estr(?:o|ó)geno|\bER\b)[^\n%]*?(\d{1,3})\s*%`
+- RP/PR (estado y %):
+  - Estado: `(?i)(receptor(?:\s+hormonal)?\s+de\s+progest(?:erona|ágenos)|\bPR\b)[^\n]*\b(positiv[oa]|negativ[oa])\b`
+  - %: `(?i)(receptor(?:\s+hormonal)?\s+de\s+progest(?:erona|ágenos)|\bPR\b)[^\n%]*?(\d{1,3})\s*%`
+- PD-L1 (TPS/CPS):
+  - TPS: `(?i)\bPD\s*-?L1\b[^\n]*\bTPS\b[^\n%]*?(\d{1,3})\s*%`
+  - CPS: `(?i)\bPD\s*-?L1\b[^\n]*\bCPS\b[^\n\d]*?(\d{1,3})`
+
+Sugerencia de claves en `extracted_data`
+- `ihq_estudios_solicitados` → list[str]
+- `ihq_p16_estado` → {POSITIVO|NEGATIVO|""}
+- `ihq_p16_porcentaje` → "0-100" (texto)
+- `ihq_her2_score` → {0,1+,2+,3+}
+- `ihq_her2_ish` → {AMPLIFICADO|NO AMPLIFICADO|""}
+- `ihq_ki67_porcentaje` → "0-100"
+- `ihq_re_estado`, `ihq_re_porcentaje`
+- `ihq_rp_estado`, `ihq_rp_porcentaje`
+- `ihq_pdl1_tps_porcentaje`, `ihq_pdl1_cps`
+
+Validación
+- Verificar coherencia (p. ej., 0≤%≤100). Para P16, si hay estado pero sin %, dejar porcentaje vacío.
+- Registrar vacío cuando no se mencione explícitamente en el texto.
+"""
+
 def extract_ihq_data(text: str) -> dict:
     """Función orquestadora mejorada para la extracción de datos de AMBOS tipos de IHQ."""
     data = {}

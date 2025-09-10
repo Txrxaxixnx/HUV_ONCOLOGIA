@@ -1,122 +1,88 @@
-# OCR Médico HUV — Procesador de Informes PDF
+EVARISIS Gestor H.U.V: Gestión e Investigación Hospitalaria
 
-Aplicación de escritorio en Python para procesar informes de Patología del HUV en PDF mediante OCR (Tesseract), extraer datos estructurados y exportarlos a Excel con formato profesional.
+Versión actual del software: v1.1 (10/09/2025). Este repositorio contiene la aplicación de escritorio base del ecosistema EVARISIS Gestor H.U.V, que transforma informes PDF de patología en datos estructurados listos para análisis y toma de decisiones.
 
-## Autoría
+Visión Estratégica
+- Misión: Estructurar y analizar datos clínicos verídicos provenientes de informes de patología para transformar la toma de decisiones, la investigación y la gestión de recursos del HUV.
+- Objetivos:
+  - Inteligencia de negocio: centralizar datos y habilitar dashboards en Power BI.
+  - Investigación clínica/epidemiológica: priorizar IHQ y estudios moleculares.
+  - Optimización de recursos: análisis predictivo para convenios y compras por volumen.
+  - Automatización: reducir errores y tiempos; futura integración con SERVINTE.
+  - Soporte clínico: sentar bases de futuras herramientas de IA.
 
-- Proyecto institucional del Hospital Universitario del Valle (HUV), desarrollado por el Área de Innovación y Desarrollo.
-- Dirección médica: Jefe Médico de Oncología, Dr. Juan Camilo Bayona.
+¿Qué hace hoy (v1.1)?
+- GUI en Python (Tkinter) para procesamiento por lotes de PDFs.
+- OCR robusto (Tesseract + PyMuPDF) y extracción por expresiones regulares.
+- Mapeo a un esquema operativo validado (55 columnas) y exportación a Excel.
+- Procesadores especializados activos: Autopsia, IHQ, Biopsia y Revisión.
 
-## Características
+Ejecución
+- App principal: `python huv_ocr_sistema_definitivo.py`
+- Procesadores (opcionales):
+  - `python procesador_autopsia.py`
+  - `python procesador_ihq.py`
+  - `python procesador_biopsia.py`
+  - `python procesador_revision.py`
 
-- Interfaz gráfica (Tkinter) y procesamiento por lotes.
-- OCR optimizado (Tesseract) con parámetros configurables.
-- Extracción basada en expresiones regulares adaptadas a informes del HUV.
-- Exportación a Excel con `pandas` y formato de encabezados con `openpyxl`.
-- Logs detallados y archivo de depuración OCR por PDF.
+Análisis Avanzado IHQ (v1.1)
+- En la aplicación, usa el botón `Analizar Biomarcadores IHQ (v1.1)` para seleccionar uno o varios PDFs de IHQ y una carpeta de salida.
+- Genera un Excel separado con biomarcadores: HER2, Ki‑67, RE/ER, RP/PR, PD‑L1, P16 (estado/porcentaje) y "Estudios Solicitados".
+- No modifica el esquema operativo estándar de 55 columnas del flujo principal.
 
-## Requisitos
+Gobernanza y Autoría
+- Líder de Proyecto e Investigador Principal: Dr. Juan Camilo Bayona (Jefe Médico de Oncología).
+- Desarrollador Principal: Ing. Daniel Restrepo (Área de Innovación y Desarrollo, GDI).
+- Entidad Ejecutora: Área de Innovación y Desarrollo del HUV Evaristo García.
 
+Instalación Rápida
+- Opción A – Automática: `python instalar_dependencias.py`
+- Opción B – Manual:
+  - `pip install -r requirements.txt`
+  - Instala Tesseract según tu SO (ver `INICIO_RAPIDO.md`)
+
+Requisitos
 - Python 3.7+ (recomendado 3.9+)
 - Windows 10+/Ubuntu 18+/macOS 10.14+
 - Tesseract OCR instalado y accesible
 
-## Instalación rápida
-
-Opción A — Automática:
-```bash
-python instalar_dependencias.py
-```
-
-Opción B — Manual:
-```bash
-pip install -r requirements.txt
-# Instala Tesseract según tu SO (ver INICIO_RAPIDO.md)
-```
-
-Ejecutar la app principal:
-```bash
-python huv_ocr_sistema_definitivo.py
-```
-
-## Configuración
-
-Edita `config.ini`:
-- `[PATHS]`: Rutas a `tesseract` por sistema (o deja vacío si está en PATH).
-- `[OCR_SETTINGS]`: `DPI`, `PSM_MODE`, `LANGUAGE`, `OCR_CONFIG`.
-- `[PROCESSING]`: Rango de páginas y tamaño mínimo.
-- `[OUTPUT]`: Formato del nombre del archivo Excel de salida.
-- `[INTERFACE]`: Dimensiones de ventana y altura del log.
-
-Verificación:
+Verificación
 ```bash
 tesseract --version
 python -c "import pytesseract, fitz, PIL, pandas, openpyxl, dateutil; print('OK')"
 ```
 
-## Uso (app principal)
+Configuración
+- Edita `config.ini`:
+  - `[PATHS]`: rutas a `tesseract` por sistema.
+  - `[OCR_SETTINGS]`: `DPI`, `PSM_MODE`, `LANGUAGE`, `OCR_CONFIG`.
+  - `[PROCESSING]`: rango de páginas y tamaño mínimo.
+  - `[OUTPUT]`: nombre del Excel resultante.
+  - `[INTERFACE]`: dimensiones de ventana y altura del log.
 
-1) Agrega PDFs (archivos o carpeta).
-2) Selecciona carpeta de salida.
-3) Procesa y revisa el Excel generado.
+Hoja de Ruta
+- Fase 1 – Fundación y Validación (Completada – v1.0, 05/09/2025)
+- Fase 2 – Enriquecimiento de Datos (En proceso): priorizar IHQ, agregar biomarcadores (HER2, KI67, RE Estrogeno, RP Progesterona, PDL-1, Estudios Solicitados, P16[Estado, Porcentaje]).
+- Fase 3 – Centralización y Visualización: migrar a base de datos + dashboards Power BI.
+- Fase 4 – Integración y Automatización: integración con SERVINTE.
+- Fase 5 – Inteligencia Aumentada: modelos predictivos y asistente IA.
 
-El Excel aplica formato de encabezados y ajuste de columnas automáticamente.
+Arquitectura y Análisis
+- Documentación técnica: `analisis/` (índice en `analisis/README.md`).
+- Plan SERVINTE: `SERVINTE_PLAN.md`.
 
-## Procesadores especializados (por plantilla)
-
-Además de la app principal, el proyecto incluye procesadores independientes por tipo de informe. Funcionan de forma autónoma y generan un Excel listo para uso.
-
-- `procesador_autopsia.py`: Autopsias (principal, una muestra/“Cuerpo humano completo”)
-- `procesador_ihq.py`: Inmunohistoquímica (IHQ)
-- `procesador_biopsia.py`: Biopsias con múltiples especímenes (A., B., C.)
-- `procesador_revision.py`: Revisiones de casos externos (R)
-
-Ejecución (abre un selector de archivo PDF):
-```bash
-python procesador_autopsia.py
-python procesador_ihq.py
-python procesador_biopsia.py
-python procesador_revision.py
-```
-
-- Estado: los procesadores funcionan de forma individual y aplican reglas específicas de negocio y mapeos a Excel.
-- Integración al flujo principal: la app enruta automáticamente por tipo mediante `process_text_to_excel_rows` (Autopsia, IHQ, Biopsia, Revisión).
-  - Control por configuración: `[PROCESSORS].ENABLE_PROCESSORS = true|false` en `config.ini`.
-  - Más detalles: `analisis/13_processors.md` y `analisis/14_integracion_procesadores.md`.
-
-## Roadmap de integración con SERVINTE
-
-- Envío automático de datos a SERVINTE (en diseño):
-  - Exportación por lotes en formato interoperable (CSV/API según disponibilidad).
-  - Validación previa, reintentos, y bitácora de auditoría por registro.
-  - Modo “seco” (dry-run) para verificación sin impacto productivo.
-  - Configurable por `config.ini` (activar/desactivar, endpoints, autenticación).
-  - Más detalles: ver `SERVINTE_PLAN.md`.
-
-## Más información
-
-- Informe global del proyecto (visión, arquitectura, roadmap): `INFORME_GLOBAL_PROYECTO.md`
-- Historial de cambios: `CHANGELOG.md`
-
-## Arquitectura y análisis
-
-Consulta la documentación técnica en `analisis/`:
-- `analisis/README.md` — índice y guías por componente.
-
-## Crear ejecutable (opcional)
-
+Crear ejecutable (opcional)
 ```bash
 pip install pyinstaller
-pyinstaller --onefile --windowed --name=OCR_Medico huv_ocr_sistema_definitivo.py
+pyinstaller --onefile --windowed --name=EVARISIS_Gestor huv_ocr_sistema_definitivo.py
 ```
 El ejecutable requiere Tesseract instalado en la máquina destino.
 
-## Solución de problemas
-
-- “Tesseract not found”: Instala Tesseract y configura `config.ini` o PATH.
+Soporte y Problemas Comunes
+- “Tesseract not found”: instala Tesseract y configura `config.ini` o PATH.
 - “No module named …”: `pip install -r requirements.txt`.
-- OCR pobre: aumenta `DPI`, revisa calidad del PDF, considera preprocesar.
+- OCR pobre: aumenta `DPI` y revisa calidad del PDF.
 
-## Notas
-
-- Este repositorio contiene regex y mapeos específicos del HUV. Cambios en los formatos de informe requieren actualizar `huv_constants.PATTERNS_HUV`.
+Historial
+- Cambios: `CHANGELOG.md`
+- Seguimiento estratégico: `BITACORA_DE_ACERCAMIENTOS.md`

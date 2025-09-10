@@ -1,22 +1,25 @@
-# Changelog
+Changelog
 
-Todos los cambios notables de este proyecto se documentarán en este archivo.
-Sigue el formato de Keep a Changelog y se inspira en Semantic Versioning.
+Este proyecto sigue versionamiento semántico.
 
-## [Unreleased]
-- Integración con SERVINTE (CSV/API), validaciones, reintentos y auditoría.
-- Modo CLI headless y mejoras de UX (resumen por archivo, re-OCR selectivo).
-- Unificación de utilidades y `PATTERNS_BASE` para reducir duplicación.
-- Pruebas unitarias/regresión por procesador con textos anonimizados.
+[Unreleased]
+- Módulo de adquisición automatizada de datos (scraper institucional con login, descarga masiva y organización de PDFs).
+- Preparación de migración a base de datos (Fase 3) y definición de modelo.
 
-## [2025-09-09]
-### Añadido
-- Nuevo procesador: `procesador_autopsia.py` (plantilla 55 columnas, 1 muestra: "Cuerpo humano completo").
-- Enrutamiento del tipo Autopsia en `data_extraction.process_text_to_excel_rows`.
-- Documento de plan: `SERVINTE_PLAN.md` (visión de integración y fases).
+2025-09-10 – v1.1.0
+- Versión estable v1.1 liberada.
+- Nuevo análisis avanzado de IHQ accesible desde la UI (botón “Analizar Biomarcadores IHQ (v1.1)”) que genera un Excel separado con HER2, Ki‑67, RE/ER, RP/PR, PD‑L1, P16 (estado/porcentaje) y “Estudios Solicitados”.
+- Documentación actualizada: `INFORME_GLOBAL_PROYECTO.md`, `README.md`, `INICIO_RAPIDO.md` y bitácora.
 
-### Mejorado
-- `INFORME_GLOBAL_PROYECTO.md`: versión enriquecida (autoría, arquitectura, roadmap, TOC).
-- `README.md`: créditos institucionales, referencia a enrutamiento y plan SERVINTE.
-- `INICIO_RAPIDO.md`: créditos y ejemplo para ejecutar Autopsia.
+2025-09-10
+- Rebranding y reestructuración documental al ecosistema “EVARISIS Gestor H.U.V”.
+- Creación de `BITACORA_DE_ACERCAMIENTOS.md` y carpeta `comunicados/` (cinco artefactos).
+- Ajustes de análisis: documentación de extensiones IHQ y activos de datos.
 
+2025-09-05 – v1.0.0
+- Fundación y validación: motor OCR + app de escritorio.
+- Procesadores especializados: Autopsia, IHQ, Biopsia, Revisión.
+- Exportación validada a Excel (55 columnas) con formato profesional.
+
+2025-08-20 – v0.1.0
+- Inicio del desarrollo: estructura base, OCR y primeras reglas de extracción.

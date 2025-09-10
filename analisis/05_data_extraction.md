@@ -53,3 +53,18 @@
 - Unificar codificacion UTF-8 en repo para evitar mojibake.
 - Anadir pruebas unitarias de extraccion con textos de ejemplo (fixtures) para cada tipo de informe.
 - Considerar un parser por secciones (state machine) si crece la complejidad.
+
+## Extensiones planificadas (IHQ v2)
+- Objetivo: ampliar la extracción para investigación clínica en informes de Inmunohistoquímica.
+- Nuevos campos a incorporar en el diccionario `extracted_data` y en el mapeo a salida:
+  - `HER2`
+  - `KI67`
+  - `RECEPTOR HORMONAL DE ESTROGENO`
+  - `RECEPTOR HORMONAL DE PROGESTAGENOS`
+  - `PDL-1`
+  - `Estudios Solicitados`
+  - `P16 (Estado)` y `P16 (Porcentaje)`
+- Consideraciones:
+  - Patrones regex multivariantes y normalización de formatos (positivo/negativo, porcentajes, rangos, intensidad, escala ASCO/CAP cuando aplique).
+  - Impacto en esquema: mantener compatibilidad con 55 columnas e introducir columnas adicionales en un perfil de exportación extendido (o futura BD en Fase 3).
+  - Validación clínica con Dr. Bayona para nomenclatura y umbrales.

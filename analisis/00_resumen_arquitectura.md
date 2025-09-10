@@ -1,6 +1,6 @@
-# Resumen de Arquitectura del Sistema OCR HUV
+# Resumen de Arquitectura – EVARISIS Gestor H.U.V
 
-Este documento explica, de manera ejecutiva, como esta organizado el proyecto, como fluyen los datos y como se conectan los componentes principales. Sirve como mapa mental previo a los analisis por archivo.
+Este documento explica, de manera ejecutiva, cómo está organizado el proyecto, cómo fluyen los datos y cómo se conectan los componentes principales. Sirve como mapa mental previo a los análisis por archivo.
 
 ## Objetivo del sistema
 - Extraer texto de informes PDF de Patologia del HUV mediante OCR (Tesseract via `pytesseract`).

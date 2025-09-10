@@ -1,107 +1,78 @@
-# Informe Global del Proyecto — OCR Médico HUV
+EVARISIS Gestor H.U.V: Informe Global del Proyecto
 
-## Tabla de Contenidos
-- [Resumen Ejecutivo](#resumen-ejecutivo)
-- [Autoría y Gobierno del Proyecto](#autoría-y-gobierno-del-proyecto)
-- [Capacidades Clave](#capacidades-clave)
-- [Arquitectura del Sistema](#arquitectura-del-sistema)
-- [Flujo de Proceso (App Principal)](#flujo-de-proceso-app-principal)
-- [Esquema de Datos (55 columnas)](#esquema-de-datos-55-columnas)
-- [Integración de Procesadores](#integración-de-procesadores)
-- [Calidad, Seguridad y Operación](#calidad-seguridad-y-operación)
-- [Hoja de Ruta y Planes de Mejora](#hoja-de-ruta-y-planes-de-mejora)
-- [Cómo Ejecutar](#cómo-ejecutar)
-- [Recursos y Dependencias](#recursos-y-dependencias)
-- [Conclusión](#conclusión)
+Versión del software: v1.1 (10/09/2025)
+Fecha de esta actualización documental: 10/09/2025
 
-## Resumen Ejecutivo
-- Objetivo: Automatizar la extracción de datos clínico‑patológicos desde informes PDF del Hospital Universitario del Valle (HUV) con OCR (Tesseract), normalizar información y generar Excel listos para uso clínico/administrativo.
-- Alcance actual: App de escritorio con GUI (Tkinter) para lotes; OCR optimizado; extracción robusta por expresiones regulares; mapeo a 55 columnas; estilos en Excel; logs y artefactos de depuración.
-- Extensión: Procesadores especializados por plantilla (Autopsia, IHQ, Biopsia, Revisión) operativos en modo independiente y enrutable desde la app principal.
+Resumen Ejecutivo
+- EVARISIS Gestor H.U.V es la plataforma institucional para estructurar y analizar datos clínicos verídicos provenientes de informes de patología, fortaleciendo la toma de decisiones, la investigación y la gestión de recursos del HUV.
+- La versión actual (v1.1) automatiza la extracción desde PDFs, normaliza la información y la entrega en un esquema operativo validado de 55 columnas. Incluye procesadores especializados (Autopsia, IHQ, Biopsia, Revisión) y agrega un análisis avanzado de IHQ mediante un botón en la interfaz que genera un Excel separado con biomarcadores (HER2, Ki‑67, RE/ER, RP/PR, PD‑L1, P16 y Estudios Solicitados).
 
-## Autoría y Gobierno del Proyecto
-- Área responsable: Área de Innovación y Desarrollo del HUV.
-- Dirección médica: Liderado por el Jefe Médico de Oncología, Dr. Juan Camilo Bayona.
-- Propósito institucional: Reducir tiempos de registro, mejorar calidad de datos y habilitar analítica clínica en patología oncológica.
+Visión Estratégica
+- Misión: Transformar informes de patología del HUV en un activo de datos centralizado para decisiones clínicas, investigación y gestión.
+- Objetivos estratégicos:
+  - Inteligencia de negocio hospitalaria (Power BI).
+  - Investigación clínica y epidemiológica (énfasis en IHQ y moleculares).
+  - Optimización de recursos (análisis predictivo para convenios/farmacéuticas).
+  - Automatización de procesos (desde OCR hasta integración con SERVINTE).
+  - Soporte a decisiones clínicas (bases para IA futura).
 
-## Capacidades Clave
-- OCR de PDFs escaneados (PyMuPDF + Tesseract) con parámetros ajustables (`config.ini`).
-- Extracción de campos clínicos y administrativos (identificación, servicio, fechas, macro/micro/diagnóstico/comentarios, órgano/especímenes, responsables, malignidad, etc.).
-- Normalizaciones: nombre completo, edad → fecha de nacimiento, formatos de fecha, números de identificación.
-- Mapeo a Excel (55 columnas) con formato profesional (encabezados y ancho ajustado).
-- Procesamiento por lotes con barra de progreso y registro de eventos.
-- Depuración: guarda texto OCR por PDF para revisión rápida.
+Gobernanza y Roles
+- Líder de Proyecto e Investigador Principal: Dr. Juan Camilo Bayona (Jefe Médico de Oncología).
+- Desarrollador Principal: Ing. Daniel Restrepo (Área de Innovación y Desarrollo, GDI).
+- Entidad Ejecutora: Área de Innovación y Desarrollo del HUV Evaristo García.
 
-## Arquitectura del Sistema
-- `huv_ocr_sistema_definitivo.py`: punto de entrada; configura Tesseract por SO y lanza GUI (`ui.HUVOCRSystem`).
-- `ui.py`: interfaz gráfica; orquesta OCR → extracción → mapeo → exportación; administra logs y progreso.
-- `ocr_processing.py`: render de páginas PDF, preprocesado y OCR con Tesseract (DPI, PSM, idioma, reescalado).
-- `data_extraction.py`: extracción y normalizaciones base (regex `PATTERNS_HUV`, detección de tipo, specimens, malignidad) y mapeo a 55 columnas.
-- `huv_constants.py`: constantes y tablas (CUPS, procedimientos, especialidades, patrones regex, defaults del HUV).
-- Procesadores especializados:
-  - `procesador_autopsia.py`: autopsias; 1 muestra (Cuerpo humano completo); hospitalizado=SI; CUPS/Procedimiento propios.
-  - `procesador_ihq.py`: Inmunohistoquímica; adaptado a ambas plantillas; ambulatorio, COEX, identificador=0.
-  - `procesador_biopsia.py`: biopsias con múltiples especímenes (A., B., C.); genera N filas por informe.
-  - `procesador_revision.py`: revisión de casos externos; extracción dedicada y mapeo a 1 fila.
-- Utilidades: `instalar_dependencias.py`, `crear_ejecutable.py`, `test_sistema.py`.
+Alcance Actual (v1.1)
+- OCR (PyMuPDF + Tesseract) y extracción por expresiones regulares.
+- Mapeo a esquema operativo de 55 columnas y exportación a Excel.
+- Procesadores especializados: Autopsia, IHQ, Biopsia, Revisión.
+- Análisis avanzado de IHQ: botón en la UI “Analizar Biomarcadores IHQ (v1.1)” que produce un Excel extendido con biomarcadores.
+- Artefactos operativos: logs, archivos de depuración OCR y UI para procesamiento por lotes.
 
-## Flujo de Proceso (App Principal)
-1) Selección de PDFs y carpeta de salida (GUI).
-2) OCR por página (PyMuPDF → PIL → Tesseract) con reescalado y PSM configurables.
-3) Enrutamiento por tipo: `data_extraction.process_text_to_excel_rows` delega a Autopsia/IHQ/Biopsia/Revisión si están habilitados; si no, usa la extracción base.
-4) Mapeo a 55 columnas (mapeo del procesador o mapeo base según corresponda).
-5) Exportación a Excel (pandas + openpyxl) con estilos.
-6) Logs + artefacto de depuración: `DEBUG_OCR_OUTPUT_<pdf>.txt`.
+Hoja de Ruta (Roadmap)
+- Fase 1 – Fundación y Validación (Completada – v1.0):
+  - Motor de OCR y app de escritorio.
+  - Procesadores especializados para cuatro plantillas base (Biopsia, IHQ, Autopsia, Revisión).
+  - Salida validada a Excel de 55 columnas.
+- Fase 2 – Enriquecimiento de Datos para Investigación (v1.1 liberada y en avance):
+  - Análisis avanzado de IHQ (v1.1): biomarcadores clave (HER2, Ki‑67, RE/ER, RP/PR, PD‑L1, P16, Estudios Solicitados) en Excel separado.
+  - Próximo: Módulo de adquisición automatizada (scraper institucional) para `huvpatologia.qhorte.com` con login, descarga masiva y organización de PDFs.
+- Fase 3 – Centralización y Visualización de Datos:
+  - Migración de Excel a base de datos centralizada (SQL o similar).
+  - Dashboards y reportes dinámicos en Power BI.
+- Fase 4 – Integración y Automatización Sistémica:
+  - Módulo de integración con SERVINTE (carga automática y segura de datos).
+  - Escalamiento a otras áreas de alto costo.
+- Fase 5 – Inteligencia Aumentada:
+  - Modelos predictivos (demanda de medicamentos, tendencias).
+  - Asistente de IA para soporte diagnóstico (conocimiento validado y data histórica).
 
-## Esquema de Datos (55 columnas)
-- Conjunto estandarizado utilizado por el HUV: identificación del caso y paciente, atención/servicio, autorizaciones, fechas (ingreso/ordenamiento/finalización), especialidad, hospitalización, CUPS/procedimiento, órgano/muestra, descripciones macro/micro/diagnóstico, malignidad, comentarios y campos de auditoría (usuario, hora desc. macro, responsable macro).
+Metodología y Gestión del Proyecto
+- Versionamiento: semántico. Versión estable v1.1 consolidada el 10/09/2025.
+- Historial de cambios: `CHANGELOG.md` como fuente de verdad del histórico.
+- Trazabilidad: `BITACORA_DE_ACERCAMIENTOS.md` para registrar reuniones, acuerdos y seguimiento.
 
-## Integración de Procesadores
-- Enrutador activo: `data_extraction.process_text_to_excel_rows` detecta tipo y delega a procesadores (Autopsia, IHQ, Biopsia, Revisión) cuando está habilitado por configuración.
-- Fallback: `extract_huv_data` + `map_to_excel_format` para tipos no soportados o cuando se deshabilita.
-- Activación/Desactivación: `[PROCESSORS].ENABLE_PROCESSORS` en `config.ini` (true/false).
-- Detalles técnicos: `analisis/14_integracion_procesadores.md`.
+Activos y Fuentes de Datos
+- Esquemas de datos de referencia:
+  - Esquema operativo (55 columnas): estándar validado de salida actual.
+  - Esquema Maestro H.U.V (167 columnas): formato exhaustivo institucional (guía para el enriquecimiento futuro).
+- Fuente primaria de informes (PDFs):
+  - Portal de Patología H.U.V: `https://huvpatologia.qhorte.com/index.php` (acceso solo intranet HUV).
+- Fuentes de conocimiento científico (para futura IA):
+  - CAP: `https://www.cap.org/protocols-and-guidelines/cancer-reporting-tools/cancer-protocol-templates`
+  - Pathology Outlines: `https://www.pathologyoutlines.com/`
+  - OMS Libros Azules: `https://tumourclassification.iarc.who.int/home` (acceso con credenciales).
 
-## Calidad, Seguridad y Operación
-- Codificación: UTF‑8 extremo a extremo; sanitización de caracteres en extracción.
-- Robustez de regex: uso de delimitadores por encabezados y `re.DOTALL`, con planes para `PATTERNS_BASE` y overrides por procesador.
-- Rendimiento: el costo está dominado por OCR; la modularización mejora mantenibilidad.
-- Operación: procesamiento por lotes no bloqueante; logs con conteos de archivos/errores/filas.
-- Compatibilidad: Windows/Linux/macOS; ejecutable con PyInstaller opcional (requiere Tesseract instalado).
+Arquitectura (Resumen)
+- `huv_ocr_sistema_definitivo.py`: punto de entrada y GUI.
+- `ocr_processing.py`: renderizado PDF e interfaz con Tesseract.
+- `data_extraction.py`: extracción/normalización y mapeo a 55 columnas.
+- `huv_constants.py`: constantes, CUPS/procedimientos, patrones.
+- Procesadores: `procesador_autopsia.py`, `procesador_ihq.py`, `procesador_biopsia.py`, `procesador_revision.py`.
 
-## Hoja de Ruta y Planes de Mejora
-- Integración con SERVINTE (planeada): ver `SERVINTE_PLAN.md`.
-  - Exportación por lotes (CSV/API), validaciones, reintentos y bitácora de auditoría.
-  - Modo “dry‑run” y parametrización en `config.ini` (endpoints, autenticación, timeouts).
-  - Resguardos con colas locales y respaldos por lote.
-- Extracción más robusta
-  - Unificar utilidades en módulo compartido; crear `PATTERNS_BASE` para reducir duplicación.
-  - Mejorar detección de tipo con clasificadores ML ligeros y heurísticas adicionales.
-  - Aumentar cobertura de patrones para nuevas variantes de plantillas.
-- Experiencia de usuario
-  - Estado por archivo con resumen de campos clave y validaciones previas al exportar.
-  - Reintentos selectivos y re‑OCR para páginas conflictivas.
-  - Modo CLI headless para automatizaciones planificadas (tareas programadas/cron).
-- Calidad y pruebas
-  - Pruebas unitarias por procesador y regresión de patrones con textos anonimizados.
-  - Dataset de ejemplo expandido (sin datos sensibles) para QA.
-- Despliegue y gestión
-  - Contenedorización opcional y empaquetado multi‑plataforma.
-  - Telemetría opcional (local) de performance y errores, con opt‑in institucional.
-  - Hardening de seguridad (manejo seguro de credenciales, aislamiento de procesos OCR).
+Ejecución Básica
+- App principal: `python huv_ocr_sistema_definitivo.py`
+- Requisitos: Tesseract instalado; dependencias de `requirements.txt`.
 
-## Cómo Ejecutar
-- App principal (GUI): `python huv_ocr_sistema_definitivo.py`.
-- Procesadores individuales:
-  - `python procesador_autopsia.py`
-  - `python procesador_ihq.py`
-  - `python procesador_biopsia.py`
-  - `python procesador_revision.py`
+Notas Finales
+- La v1.1 entrega valor inmediato, añade análisis avanzado de IHQ y sienta la base técnica para centralización, visualización estratégica, integración con SERVINTE e inteligencia aumentada.
 
-## Recursos y Dependencias
-- Python 3.7+; ver `requirements.txt` o ejecutar `instalar_dependencias.py`.
-- Tesseract OCR instalado y `spa.traineddata` disponible.
-- PDFs de ejemplo en `pdfs_patologia/` y artefactos de depuración en `EXCEL/` (en ejemplos) o en la carpeta de salida.
-
-## Conclusión
-Proyecto institucional del HUV (Innovación y Desarrollo), dirigido por el Dr. Juan Camilo Bayona. La versión actual entrega valor inmediato con extracción confiable y exportación estándar, y mantiene una ruta clara para evolucionar hacia integración automática con SERVINTE, mayor robustez, mejor UX y operación escalable.

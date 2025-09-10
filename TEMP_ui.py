@@ -1,7 +1,7 @@
-#ui.py:
+﻿#ui.py:
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Interfaz gráfica del sistema OCR HUV."""
+"""Interfaz grÃ¡fica del sistema OCR HUV."""
 
 import threading
 from datetime import datetime
@@ -42,7 +42,7 @@ class HUVOCRSystem:
 
         self._setup_gui()
 
-    # Configuración de la interfaz
+    # ConfiguraciÃ³n de la interfaz
     def _setup_gui(self):
         title_frame = tk.Frame(self.root, bg="#f8f9fa")
         title_frame.pack(pady=15, fill="x")
@@ -58,7 +58,7 @@ class HUVOCRSystem:
 
         subtitle_label = tk.Label(
             title_frame,
-            text="Extracción automatizada de informes de patología",
+            text="ExtracciÃ³n automatizada de informes de patologÃ­a",
             font=("Arial", 10),
             bg="#f8f9fa",
             fg="#7f8c8d",
@@ -70,7 +70,7 @@ class HUVOCRSystem:
 
         tk.Button(
             button_frame,
-            text="📄 Añadir PDFs",
+            text="ðŸ“„ AÃ±adir PDFs",
             command=self.add_files,
             bg="#3498db",
             fg="white",
@@ -81,7 +81,7 @@ class HUVOCRSystem:
 
         tk.Button(
             button_frame,
-            text="📁 Carpeta PDFs",
+            text="ðŸ“ Carpeta PDFs",
             command=self.add_folder,
             bg="#2ecc71",
             fg="white",
@@ -92,7 +92,7 @@ class HUVOCRSystem:
 
         tk.Button(
             button_frame,
-            text="🗑️ Limpiar",
+            text="ðŸ—‘ï¸ Limpiar",
             command=self.clear_files,
             bg="#e74c3c",
             fg="white",
@@ -133,7 +133,7 @@ class HUVOCRSystem:
 
         tk.Button(
             output_frame,
-            text="📂 Carpeta de Salida",
+            text="ðŸ“‚ Carpeta de Salida",
             command=self.select_output_dir,
             bg="#f39c12",
             fg="white",
@@ -158,8 +158,8 @@ class HUVOCRSystem:
 
         tk.Button(
             process_frame,
-            text="Analizar Biomarcadores IHQ (v1.1)",
-            command=self.start_processing_ihq_avanzado,
+            text="Procesar IHQ (Biomarcadores)",
+            command=self.start_processing_ihq,
             bg="#16a085",
             fg="white",
             padx=15,
@@ -169,7 +169,7 @@ class HUVOCRSystem:
 
         tk.Button(
             process_frame,
-            text="🚀 PROCESAR INFORMES",
+            text="ðŸš€ PROCESAR INFORMES",
             command=self.start_processing,
             bg="#9b59b6",
             fg="white",
@@ -217,9 +217,9 @@ class HUVOCRSystem:
             if file_path not in self.files:
                 self.files.append(file_path)
                 filename = Path(file_path).name
-                self.file_listbox.insert(tk.END, f"📄 {filename}")
+                self.file_listbox.insert(tk.END, f"ðŸ“„ {filename}")
                 added += 1
-        self._log(f"➕ {added} archivos añadidos. Total: {len(self.files)}")
+        self._log(f"âž• {added} archivos aÃ±adidos. Total: {len(self.files)}")
 
     def add_folder(self):
         folder = filedialog.askdirectory(title="Seleccionar carpeta con PDFs")
@@ -231,21 +231,21 @@ class HUVOCRSystem:
             file_str = str(pdf_path)
             if file_str not in self.files:
                 self.files.append(file_str)
-                self.file_listbox.insert(tk.END, f"📄 {pdf_path.name}")
+                self.file_listbox.insert(tk.END, f"ðŸ“„ {pdf_path.name}")
                 added += 1
-        self._log(f"📁 {added} archivos añadidos desde carpeta. Total: {len(self.files)}")
+        self._log(f"ðŸ“ {added} archivos aÃ±adidos desde carpeta. Total: {len(self.files)}")
 
     def clear_files(self):
         self.files.clear()
         self.file_listbox.delete(0, tk.END)
-        self._log("🗑️ Lista de archivos limpiada")
+        self._log("ðŸ—‘ï¸ Lista de archivos limpiada")
 
     def select_output_dir(self):
         directory = filedialog.askdirectory(title="Seleccionar carpeta de salida")
         if directory:
             self.output_dir = directory
-            self.output_label.config(text=f"📁 {directory}")
-            self._log(f"📂 Carpeta de salida: {directory}")
+            self.output_label.config(text=f"ðŸ“ {directory}")
+            self._log(f"ðŸ“‚ Carpeta de salida: {directory}")
 
     # Logs y procesamiento
     def _log(self, message):
@@ -269,74 +269,74 @@ class HUVOCRSystem:
         all_rows = []
         processed_count = 0
         error_count = 0
-        self._log(f"🚀 Iniciando procesamiento de {total_files} archivos")
+        self._log(f"ðŸš€ Iniciando procesamiento de {total_files} archivos")
         self._log("=" * 60)
         for idx, pdf_path in enumerate(self.files, 1):
             filename = Path(pdf_path).name
-            self._log(f"📄 [{idx}/{total_files}] Procesando: {filename}")
+            self._log(f"ðŸ“„ [{idx}/{total_files}] Procesando: {filename}")
             try:
-                self._log("   🔍 Extrayendo texto con OCR...")
+                self._log("   ðŸ” Extrayendo texto con OCR...")
                 pdf_text = pdf_to_text_enhanced(pdf_path)
 
-                # ----- INICIO DE CÓDIGO DE DEPURACIÓN -----
-                # Guardar el texto crudo del OCR en un archivo para análisis
+                # ----- INICIO DE CÃ“DIGO DE DEPURACIÃ“N -----
+                # Guardar el texto crudo del OCR en un archivo para anÃ¡lisis
                 debug_filename = f"DEBUG_OCR_OUTPUT_{filename}.txt"
                 try:
                     with open(Path(self.output_dir) / debug_filename, "w", encoding="utf-8") as f:
                         f.write(pdf_text)
-                    self._log(f"   🐛 ¡Texto de OCR guardado en {debug_filename} para depuración!")
+                    self._log(f"   ðŸ› Â¡Texto de OCR guardado en {debug_filename} para depuraciÃ³n!")
                 except Exception as e:
-                    self._log(f"   ❌ No se pudo guardar el archivo de depuración: {e}")
-                # ----- FIN DE CÓDIGO DE DEPURACIÓN -----
+                    self._log(f"   âŒ No se pudo guardar el archivo de depuraciÃ³n: {e}")
+                # ----- FIN DE CÃ“DIGO DE DEPURACIÃ“N -----
 
                 if not pdf_text.strip():
-                    self._log("   ⚠️  Advertencia: No se extrajo texto del PDF")
+                    self._log("   âš ï¸  Advertencia: No se extrajo texto del PDF")
                     continue
-                self._log("   📊 Extrayendo datos estructurados...")
+                self._log("   ðŸ“Š Extrayendo datos estructurados...")
                 tipo_informe = detect_report_type(pdf_text)
                 excel_rows = process_text_to_excel_rows(pdf_text, filename)
                 extracted_data = {'tipo_informe': tipo_informe, 'specimens': [None] * len(excel_rows)}
-                # ----- INICIO DE CÓDIGO DE DEPURACIÓN DE MALIGNIDAD -----
+                # ----- INICIO DE CÃ“DIGO DE DEPURACIÃ“N DE MALIGNIDAD -----
                 print(f"\n--- DEBUG: {filename} ---")
-                diagnostico_texto = extracted_data.get('diagnostico', '¡¡¡DIAGNÓSTICO NO ENCONTRADO!!!')
-                microscopica_texto = extracted_data.get('descripcion_microscopica', '¡¡¡DESCRIPCIÓN MICROSCÓPICA NO ENCONTRADA!!!')
+                diagnostico_texto = extracted_data.get('diagnostico', 'Â¡Â¡Â¡DIAGNÃ“STICO NO ENCONTRADO!!!')
+                microscopica_texto = extracted_data.get('descripcion_microscopica', 'Â¡Â¡Â¡DESCRIPCIÃ“N MICROSCÃ“PICA NO ENCONTRADA!!!')
                 
-                print(f"TEXTO DEL DIAGNÓSTICO EXTRAÍDO:\n---\n{diagnostico_texto}\n---")
-                print(f"TEXTO MICROSCÓPICO EXTRAÍDO:\n---\n{microscopica_texto}\n---")
+                print(f"TEXTO DEL DIAGNÃ“STICO EXTRAÃDO:\n---\n{diagnostico_texto}\n---")
+                print(f"TEXTO MICROSCÃ“PICO EXTRAÃDO:\n---\n{microscopica_texto}\n---")
                 print(f"RESULTADO DE MALIGNIDAD CALCULADO: {extracted_data.get('malignidad')}")
                 print("--- FIN DEBUG ---\n")
-                # ----- FIN DE CÓDIGO DE DEPURACIÓN -----
+                # ----- FIN DE CÃ“DIGO DE DEPURACIÃ“N -----
                 fuente = extracted_data.get('fecha_ordenamiento_fuente', '')
                 if fuente:
-                    self._log(f"   🗓️ Fecha ordenamiento desde: {fuente}")
+                    self._log(f"   ðŸ—“ï¸ Fecha ordenamiento desde: {fuente}")
                 if extracted_data.get('eps_normalizado'):
-                    self._log("   🔧 EPS normalizada")
+                    self._log("   ðŸ”§ EPS normalizada")
                 if extracted_data.get('servicio_normalizado'):
-                    self._log("   🔧 Servicio normalizado")
-                self._log("   📋 Mapeando a formato Excel...")
+                    self._log("   ðŸ”§ Servicio normalizado")
+                self._log("   ðŸ“‹ Mapeando a formato Excel...")
                 map_to_excel_format = lambda *args, **kwargs: excel_rows
                 excel_rows = map_to_excel_format(extracted_data, filename)
                 all_rows.extend(excel_rows)
                 processed_count += 1
                 tipo_informe = extracted_data.get('tipo_informe', 'DESCONOCIDO')
                 num_specimens = len(extracted_data.get('specimens', []))
-                self._log(f"   ✅ Completado - Tipo: {tipo_informe} - Especímenes: {num_specimens}")
+                self._log(f"   âœ… Completado - Tipo: {tipo_informe} - EspecÃ­menes: {num_specimens}")
             except Exception as e:
                 error_count += 1
-                self._log(f"   ❌ Error: {str(e)}")
+                self._log(f"   âŒ Error: {str(e)}")
             self.progress_bar["value"] = idx
             self.root.update_idletasks()
         if all_rows:
             self._log("=" * 60)
-            self._log("💾 Generando archivo Excel...")
+            self._log("ðŸ’¾ Generando archivo Excel...")
             try:
                 df = pd.DataFrame(all_rows)
                 timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)
                 output_filename = f"{OUTPUT_FILENAME}_{timestamp}.xlsx"
                 output_path = Path(self.output_dir) / output_filename
                 df.to_excel(output_path, index=False, engine="openpyxl")
-                # --- INICIO DE CÓDIGO PARA FORMATEAR ENCABEZADOS ---
-                self._log("   ✨ Aplicando formato profesional a encabezados...")
+                # --- INICIO DE CÃ“DIGO PARA FORMATEAR ENCABEZADOS ---
+                self._log(" Â  âœ¨ Aplicando formato profesional a encabezados...")
                 wb = load_workbook(output_path)
                 ws = wb.active
 
@@ -351,7 +351,7 @@ class HUVOCRSystem:
                     cell.alignment = header_alignment
                     cell.fill = header_fill
 
-                # Ajustar el ancho de las columnas para una mejor visualización
+                # Ajustar el ancho de las columnas para una mejor visualizaciÃ³n
                 for col in ws.columns:
                     max_length = 0
                     column = col[0].column_letter
@@ -362,31 +362,32 @@ class HUVOCRSystem:
                         except:
                             pass
                     adjusted_width = (max_length + 2)
-                    ws.column_dimensions[column].width = min(adjusted_width, 50) # Limitar ancho máximo
+                    ws.column_dimensions[column].width = min(adjusted_width, 50) # Limitar ancho mÃ¡ximo
 
                 # Guardar el archivo Excel con el nuevo formato
                 wb.save(output_path)
                 
                 self._log("=" * 60)
-                self._log("🎉 PROCESAMIENTO COMPLETADO")
-                self._log(f"✅ Archivos procesados exitosamente: {processed_count}")
-                self._log(f"❌ Archivos con errores: {error_count}")
-                self._log(f"📊 Total de registros generados: {len(all_rows)}")
-                self._log(f"📁 Archivo guardado: {output_filename}")
+                self._log("ðŸŽ‰ PROCESAMIENTO COMPLETADO")
+                self._log(f"âœ… Archivos procesados exitosamente: {processed_count}")
+                self._log(f"âŒ Archivos con errores: {error_count}")
+                self._log(f"ðŸ“Š Total de registros generados: {len(all_rows)}")
+                self._log(f"ðŸ“ Archivo guardado: {output_filename}")
                 self._log("=" * 60)
                 mensaje = "\n".join([
-                    "✅ Procesamiento exitoso!",
+                    "âœ… Procesamiento exitoso!",
                     "",
-                    f"📊 {processed_count} archivos procesados",
-                    f"📄 {len(all_rows)} registros generados",
-                    f"📁 Archivo: {output_filename}",
+                    f"ðŸ“Š {processed_count} archivos procesados",
+                    f"ðŸ“„ {len(all_rows)} registros generados",
+                    f"ðŸ“ Archivo: {output_filename}",
                     "",
                     f"El archivo Excel ha sido guardado en:\n{output_path}",
                 ])
                 messagebox.showinfo("Procesamiento Completado", mensaje)
             except Exception as e:
-                self._log(f"❌ Error generando Excel: {str(e)}")
+                self._log(f"âŒ Error generando Excel: {str(e)}")
                 messagebox.showerror("Error", f"Error generando archivo Excel:\n{str(e)}")
         else:
-            self._log("⚠️ No se procesó ningún archivo exitosamente")
-            messagebox.showwarning("Sin resultados", "No se pudo extraer información de ningún archivo")
+            self._log("âš ï¸ No se procesÃ³ ningÃºn archivo exitosamente")
+            messagebox.showwarning("Sin resultados", "No se pudo extraer informaciÃ³n de ningÃºn archivo")
+

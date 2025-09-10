@@ -1,11 +1,24 @@
-# Datos y artefactos del repositorio
+Datos y Artefactos del Ecosistema
 
-## Carpetas y archivos relevantes
-- `EXCEL/`: Ejemplos/artefactos de exportaciones previas (Excel) y salidas de depuracion de OCR.
+Activos Clave
+- Esquema operativo (55 columnas): formato actual de salida del EVARISIS Gestor H.U.V validado para operación inicial.
+- Esquema Maestro H.U.V (167 columnas): referencia exhaustiva institucional que guía el enriquecimiento futuro del esquema operativo.
+
+Fuente Primaria de Informes (PDFs)
+- Portal de Patología H.U.V: `https://huvpatologia.qhorte.com/index.php`
+  - Nota de acceso: aplicación de red local; solo intranet HUV (similar a SERVINTE). El proyecto cuenta con credenciales institucionales.
+
+Fuentes de Conocimiento Científico (para futura IA)
+- CAP: `https://www.cap.org/protocols-and-guidelines/cancer-reporting-tools/cancer-protocol-templates`
+- Pathology Outlines: `https://www.pathologyoutlines.com/`
+- OMS (Libros Azules): `https://tumourclassification.iarc.who.int/home`
+
+Carpetas y Archivos del Repositorio
+- `EXCEL/`: artefactos de exportaciones (Excel) y salidas de depuración del OCR.
 - `pdfs_patologia/`: PDFs de ejemplo/entrada.
-- `spa.traineddata`: Datos de idioma espanol para Tesseract (si se distribuye junto al proyecto, documentar ubicacion efectiva de Tesseract).
-- `Release-25.07.0-0/poppler-25.07.0/`: Distribucion de Poppler (terceros). No forma parte del codigo del sistema, se considera dependencia binaria.
+- `spa.traineddata`: datos de idioma español para Tesseract (si se distribuye con el proyecto, documentar la ruta efectiva del binario Tesseract).
+- Dependencias de terceros (ej. Poppler): no forman parte del código del sistema.
 
-## Buenas practicas
-- No versionar salidas (Excel/PDF procesado) salvo que se necesiten como fixtures de prueba.
-- Mantener datos de ejemplo en carpetas dedicadas (`samples/`) con anonimizacion si corresponde.
+Buenas Prácticas
+- No versionar salidas (Excel/PDF procesado) salvo como fixtures de prueba.
+- Mantener datos de ejemplo en carpetas dedicadas con anonimización cuando aplique.

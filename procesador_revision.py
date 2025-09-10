@@ -138,7 +138,8 @@ def extract_revision_data(text: str) -> dict:
 
     # LÓGICA CLAVE: Se le da prioridad al médico encontrado con el patrón específico.
     if data.get('medico_tratante_rev'):
-        data['medico_tratante'] = data['medico_tratante_rev']
+        # Se limpia el campo para quitar dos puntos (:) y espacios extra
+        data['medico_tratante'] = data['medico_tratante_rev'].strip(': ')
 
     data['tipo_informe'] = 'REVISION'
     if data.get('nombre_completo'):
@@ -202,7 +203,7 @@ def map_to_excel_format(extracted_data: dict) -> list:
     row_data["N. muestra"] = extracted_data.get('numero_peticion', '')
     row_data["CUPS"] = CUPS_CODES.get('REVISION', '')
     row_data["Tipo de examen (4, 12, Metodo de obtención de la muestra, factor de certeza para el diagnóstico)"] = "REVISIONES"
-    row_data["Procedimiento (11, Tipo de estudio para el diagnóstico)"] = PROCEDIMIENTOS.get(CUPS_CODES.get('REVISION'), '')
+    row_data["Procedimiento (11. Tipo de estudio para el diagnóstico)"] = PROCEDIMIENTOS.get(CUPS_CODES.get('REVISION'), '')
     row_data["Organo (1. Muestra enviada a patología)"] = extracted_data.get('organo_final', '')
     row_data["Tarifa"] = HUV_CONFIG['tarifa_default']
     row_data["Valor"] = HUV_CONFIG['valor_default']
@@ -222,7 +223,7 @@ def map_to_excel_format(extracted_data: dict) -> list:
     row_data["Diagnostico Principal"] = ""
     row_data["Hora Desc. macro"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    EXCEL_COLUMNS = [ "N. peticion (0. Numero de biopsia)", "Hospitalizado", "Sede", "EPS", "Servicio", "Médico tratante", "Especialidad", "Ubicación", "N. Autorizacion", "Identificador Unico", "Datos Clinicos", "Fecha ordenamiento", "Tipo de documento", "N. de identificación", "Primer nombre", "Segundo nombre", "Primer apellido", "Segundo apellido", "Fecha de nacimiento", "Edad", "Genero", "Número celular", "Direccion de correo electronico", "Direccion de correo electronico 2", "Contacto de emergencia", "Departamento", "Teléfono del contacto", "Municipio", "N. muestra", "CUPS", "Tipo de examen (4, 12, Metodo de obtención de la muestra, factor de certeza para el diagnóstico)", "Procedimiento (11, Tipo de estudio para el diagnóstico)", "Organo (1. Muestra enviada a patología)", "Tarifa", "Valor", "Copago", "Descuento", "Fecha de ingreso (2. Fecha de la muestra)", "Fecha finalizacion (3. Fecha del informe)", "Usuario finalizacion", "Usuario asignacion micro", "Fecha asignacion micro", "Malignidad", "Condicion", "Descripcion macroscopica", "Descripcion microscopica (8,9, 10,12,. Invasión linfovascular y perineural, indice mitótico/Ki67, Inmunohistoquímica, tamaño tumoral)", "Descripcion Diagnostico (5,6,7 Tipo histológico, subtipo histológico, margenes tumorales)", "Diagnostico Principal", "Comentario", "Informe adicional", "Congelaciones /Otros estudios", "Liquidos (5 Tipo histologico)", "Citometria de flujo (5 Tipo histologico)", "Hora Desc. macro", "Responsable macro" ]
+    EXCEL_COLUMNS = [ "N. peticion (0. Numero de biopsia)", "Hospitalizado", "Sede", "EPS", "Servicio", "Médico tratante", "Especialidad", "Ubicación", "N. Autorizacion", "Identificador Unico", "Datos Clinicos", "Fecha ordenamiento", "Tipo de documento", "N. de identificación", "Primer nombre", "Segundo nombre", "Primer apellido", "Segundo apellido", "Fecha de nacimiento", "Edad", "Genero", "Número celular", "Direccion de correo electronico", "Direccion de correo electronico 2", "Contacto de emergencia", "Departamento", "Teléfono del contacto", "Municipio", "N. muestra", "CUPS", "Tipo de examen (4, 12, Metodo de obtención de la muestra, factor de certeza para el diagnóstico)", "Procedimiento (11. Tipo de estudio para el diagnóstico)", "Organo (1. Muestra enviada a patología)", "Tarifa", "Valor", "Copago", "Descuento", "Fecha de ingreso (2. Fecha de la muestra)", "Fecha finalizacion (3. Fecha del informe)", "Usuario finalizacion", "Usuario asignacion micro", "Fecha asignacion micro", "Malignidad", "Condicion", "Descripcion macroscopica", "Descripcion microscopica (8,9, 10,12,. Invasión linfovascular y perineural, indice mitótico/Ki67, Inmunohistoquímica, tamaño tumoral)", "Descripcion Diagnostico (5,6,7 Tipo histológico, subtipo histológico, margenes tumorales)", "Diagnostico Principal", "Comentario", "Informe adicional", "Congelaciones /Otros estudios", "Liquidos (5 Tipo histologico)", "Citometria de flujo (5 Tipo histologico)", "Hora Desc. macro", "Responsable macro" ]
     final_row = {col: row_data.get(col, '') for col in EXCEL_COLUMNS}
     
     return [final_row]
@@ -302,7 +303,7 @@ def main():
     except Exception as e:
         print("\n" + "!"*60)
         print(f"❌ Ocurrió un error inesperado:")
-        print(f"   {type(e).__name__}: {e}")
+        print(f"  {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         print("!"*60)

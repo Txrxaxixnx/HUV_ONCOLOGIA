@@ -20,6 +20,7 @@ Gobernanza y Roles
 - Líder de Proyecto e Investigador Principal: Dr. Juan Camilo Bayona (Jefe Médico de Oncología).
 - Desarrollador Principal: Ing. Daniel Restrepo (Área de Innovación y Desarrollo, GDI).
 - Entidad Ejecutora: Área de Innovación y Desarrollo del HUV Evaristo García.
+- Jefe de Gestión de la Información (GDI): Ing. Diego Peña.
 
 Alcance Actual (v1.1)
 - OCR (PyMuPDF + Tesseract) y extracción por expresiones regulares.
@@ -75,4 +76,3 @@ Ejecución Básica
 
 Notas Finales
 - La v1.1 entrega valor inmediato, añade análisis avanzado de IHQ y sienta la base técnica para centralización, visualización estratégica, integración con SERVINTE e inteligencia aumentada.
-

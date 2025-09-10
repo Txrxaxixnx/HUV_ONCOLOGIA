@@ -34,6 +34,7 @@ Gobernanza y Autoría
 - Líder de Proyecto e Investigador Principal: Dr. Juan Camilo Bayona (Jefe Médico de Oncología).
 - Desarrollador Principal: Ing. Daniel Restrepo (Área de Innovación y Desarrollo, GDI).
 - Entidad Ejecutora: Área de Innovación y Desarrollo del HUV Evaristo García.
+- Jefe de Gestión de la Información (GDI): Ing. Diego Peña.
 
 Instalación Rápida
 - Opción A – Automática: `python instalar_dependencias.py`

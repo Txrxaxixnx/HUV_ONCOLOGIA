@@ -1,7 +1,7 @@
 Bitácora de Acercamientos – EVARISIS Gestor H.U.V
 
 Propósito
-- Registro formal y auditable de la evolución del proyecto. Documenta cada sesión de trabajo y validación con el Dr. Juan Camilo Bayona y otros stakeholders.
+- Registro formal y auditable de la evolución del proyecto. Documenta cada sesión de trabajo y validación con el Dr. Juan Camilo Bayona, el Jefe de Gestión de la Información (Ing. Diego Peña) y otros stakeholders.
 
 Plantilla por Entrada
 ---

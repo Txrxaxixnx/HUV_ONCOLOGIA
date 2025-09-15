@@ -321,7 +321,9 @@ class App(ctk.CTk):
                 top_organos = df['Organo (1. Muestra enviada a patología)'].value_counts().nlargest(5)
                 sns.barplot(x=top_organos.index, y=top_organos.values, ax=ax3, palette='rocket')
                 ax3.set_title('Top 5 Órganos Analizados')
-                ax3.tick_params(axis='x', rotation=45, ha='right')
+                ax3.tick_params(axis='x', rotation=45)
+                for lbl in ax3.get_xticklabels():
+                    lbl.set_horizontalalignment('right')
             
             if 'Fecha finalizacion (3. Fecha del informe)' in df.columns:
                 fechas = pd.to_datetime(df['Fecha finalizacion (3. Fecha del informe)'], dayfirst=True, errors='coerce').dropna()

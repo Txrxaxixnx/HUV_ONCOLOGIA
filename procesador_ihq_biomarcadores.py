@@ -30,17 +30,35 @@ def _normalize_whitespace(text: str) -> str:
 
 def _iter_reports(full_text: str):
     """
-    Segmenta el texto completo en bloques por informe, usando variaciones de
-    'N. petición : IHQ######'. Incluye todo desde el marcador hasta antes del siguiente.
+    Segmenta por primera aparición de cada código IHQ###### (más robusto que anclar a 'N. petición').
+    Intenta primero '... peticion : IHQ######' en cualquier parte de la línea; si faltan códigos,
+    completa con la primera aparición cruda de 'IHQ######'.
     """
-    pattern = re.compile(
-        r'(?:^|\n)\s*(?:N[°.\s]*|No\.\s*|Nº\s*|N\s*)?petici[oó]n\s*:\s*(IHQ\d{5,7})',
-        re.IGNORECASE
-    )
-    matches = list(pattern.finditer(full_text))
-    for i, m in enumerate(matches):
-        start = m.start()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(full_text)
+    # 1) Marcas por '... peticion : IHQ######' (sin anclar a inicio de línea)
+    pet_matches = list(re.finditer(r'(?i)(?:N[°.\s]*|No\.\s*|Nº\s*|N\s*)?petici[oó]n\s*:\s*(IHQ\d{6})', full_text))
+    starts, seen = [], set()
+    for m in pet_matches:
+        code = m.group(1).upper()
+        if code not in seen:
+            starts.append((code, m.start()))
+            seen.add(code)
+
+    # 2) Fallback: primeras apariciones crudas de IHQ###### que falten
+    for m in re.finditer(r'(?i)IHQ\d{6}', full_text):
+        code = m.group(0).upper()
+        if code not in seen:
+            starts.append((code, m.start()))
+            seen.add(code)
+
+    # 3) Si no hay nada, devuelve el texto completo
+    if not starts:
+        yield full_text
+        return
+
+    # 4) Ordena por posición y rinde bloques
+    starts.sort(key=lambda x: x[1])
+    for i, (_, start) in enumerate(starts):
+        end = starts[i + 1][1] if i + 1 < len(starts) else len(full_text)
         yield full_text[start:end]
 
 def _clean_token(t: str) -> str:

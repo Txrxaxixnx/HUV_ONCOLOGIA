@@ -3,19 +3,21 @@
 """
 Extractor dedicado de biomarcadores IHQ (HER2, Ki-67, ER/PR, PD-L1, P16, Estudios Solicitados).
 No modifica el esquema operativo estándar ni otros procesadores.
-Guarda los resultados en una base de datos SQLite para análisis posterior.
+Genera un Excel extendido (55 + 8 columnas) solo para los PDFs IHQ seleccionados.
 Capaz de procesar PDFs con múltiples informes, generando una fila por cada uno.
 """
 
 import re
 from datetime import datetime
 from pathlib import Path
-import pandas as pd
 
-# Se asume que estos módulos están en el mismo directorio o en el PYTHONPATH
+import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.styles import Font, Alignment, PatternFill
+
 from ocr_processing import pdf_to_text_enhanced
 import procesador_ihq as ihq
-import database_manager # Importamos el nuevo gestor de BD
+
 
 def _extract_biomarkers(text: str) -> dict:
     """
@@ -123,38 +125,44 @@ def _extract_biomarkers(text: str) -> dict:
     return out
 
 
-def process_ihq_paths(pdf_paths: list[str], output_dir: str) -> int:
-    """
-    Procesa una lista de rutas de PDF, extrae los datos y los guarda en la BD.
-    Devuelve el número de registros procesados.
-    """
+def process_ihq_paths(pdf_paths: list[str], output_dir: str) -> Path:
     rows = []
     extended_columns = None
+    
+    # ▼▼▼ INICIO DE LA MODIFICACIÓN PARA MÚLTIPLES INFORMES ▼▼▼
     
     for pdf in pdf_paths:
         full_text = pdf_to_text_enhanced(pdf)
         
-        # Patrón para dividir el texto por cada informe.
+        # Patrón para dividir el texto por cada informe. Busca el número de petición de IHQ.
+        # El uso de 're.split' con un grupo de captura '(...)' mantiene el delimitador al inicio de cada fragmento.
         report_chunks = re.split(r'(N\.\s*peticion\s*:\s*IHQ\d+)', full_text, flags=re.IGNORECASE)
 
+        # El primer elemento de 'report_chunks' es el texto antes de la primera coincidencia (si lo hay),
+        # lo ignoramos. Luego, procesamos los fragmentos de dos en dos (delimitador + contenido).
         for i in range(1, len(report_chunks), 2):
+            # Reconstruimos el texto del informe individual
             single_report_text = report_chunks[i] + report_chunks[i+1]
             
+            # Aplicamos la misma lógica de extracción a este fragmento
             base = ihq.extract_ihq_data(single_report_text)
             base_rows = ihq.map_to_excel_format(base)
             
             if not base_rows:
-                continue
+                continue # Si no se extrae nada, pasamos al siguiente fragmento
                 
             row = dict(base_rows[0])
             biomarkers = _extract_biomarkers(single_report_text)
             row.update(biomarkers)
             rows.append(row)
 
+            # Se establece la estructura de columnas con el primer informe procesado exitosamente
             if extended_columns is None:
                 base_cols = list(base_rows[0].keys())
                 extra_cols = list(biomarkers.keys())
                 extended_columns = base_cols + extra_cols
+                
+    # ▲▲▲ FIN DE LA MODIFICACIÓN ▲▲▲
 
     if not rows:
         raise RuntimeError("No se pudo extraer información de los PDFs IHQ seleccionados.")
@@ -163,15 +171,25 @@ def process_ihq_paths(pdf_paths: list[str], output_dir: str) -> int:
     if extended_columns:
         df = df.reindex(columns=extended_columns)
 
-    # --- Bloque modificado para guardar en la Base de Datos ---
-    # Convertimos el DataFrame a una lista de diccionarios para guardarlo
-    records_to_save = df.to_dict('records')
-    
-    # Usamos nuestro nuevo gestor de base de datos
-    database_manager.init_db() # Se asegura que la DB y tabla existan
-    database_manager.save_records(records_to_save)
-    
-    print(f"✅ {len(records_to_save)} registros guardados/actualizados en la base de datos.")
-    
-    # Devolvemos la cantidad de registros procesados para la UI
-    return len(records_to_save)
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    output_path = Path(output_dir) / f"Informe_IHQ_BIOMARCADORES_{timestamp}.xlsx"
+    df.to_excel(output_path, index=False, engine='openpyxl')
+
+    # Formato de encabezados
+    wb = load_workbook(output_path)
+    ws = wb.active
+    header_font = Font(name='Calibri', size=11, bold=True, color='FFFFFF')
+    header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+    for cell in ws[1]:
+        cell.font = header_font
+        cell.alignment = header_alignment
+        cell.fill = header_fill
+    for col in ws.columns:
+        try:
+            max_length = max(len(str(cell.value)) for cell in col if cell.value)
+            ws.column_dimensions[col[0].column_letter].width = min((max_length + 2), 60)
+        except ValueError:
+            pass
+    wb.save(output_path)
+    return output_path

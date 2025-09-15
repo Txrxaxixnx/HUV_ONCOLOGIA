@@ -1,75 +1,69 @@
-﻿#huv_ocr_sistema_definitivo.py:
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Punto de entrada principal para el sistema OCR del HUV."""
+"""
+Punto de entrada principal para la aplicación EVARISIS Gestor H.U.V v2.0.
 
+Este script se encarga de:
+1. Configurar la ruta del ejecutable de Tesseract OCR.
+2. Iniciar la interfaz gráfica de usuario moderna (dashboard).
+"""
+
+import configparser
 import os
 import sys
-import configparser
-from pathlib import Path
-import tkinter as tk
 import pytesseract
+from pathlib import Path
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ CONFIGURACIÃ“N â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-_config = configparser.ConfigParser(interpolation=None)
-_config.read(Path(__file__).resolve().parent / 'config.ini', encoding='utf-8')
+# Importamos la nueva y única clase 'App' desde nuestro módulo 'ui' rediseñado
+from ui import App
 
-if sys.platform.startswith("win"):
-    tesseract_cmd = _config.get('PATHS', 'WINDOWS_TESSERACT', fallback=os.getenv('WINDOWS_TESSERACT'))
-elif sys.platform.startswith("darwin"):
-    tesseract_cmd = _config.get('PATHS', 'MACOS_TESSERACT', fallback=os.getenv('MACOS_TESSERACT'))
-else:
-    tesseract_cmd = _config.get('PATHS', 'LINUX_TESSERACT', fallback=os.getenv('LINUX_TESSERACT'))
-
-if tesseract_cmd:
-    pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
-
-from ui import HUVOCRSystem
-from tkinter import filedialog, messagebox
-from pathlib import Path as _P
-import threading
-
-def _start_processing_ihq_avanzado(self) -> None:
+def configure_tesseract():
+    """
+    Lee el archivo config.ini para encontrar la ruta de Tesseract OCR
+    y la configura para que Pytesseract pueda utilizarla.
+    """
     try:
-        files = filedialog.askopenfilenames(
-            title="Seleccionar archivos PDF IHQ",
-            filetypes=[("Archivos PDF", "*.pdf")],
-        )
-        paths = list(files)
-        if not paths:
-            messagebox.showwarning("Sin archivos", "No se seleccionaron PDFs IHQ")
-            return
-        outdir = filedialog.askdirectory(title="Seleccionar carpeta de salida para IHQ")
-        if not outdir:
-            return
-        def _worker():
-            try:
-                from procesador_ihq_biomarcadores import process_ihq_paths
-                self._log("Procesando IHQ (biomarcadores)...")
-                output_path = process_ihq_paths(paths, outdir)
-                self._log(f"IHQ listo: {_P(output_path).name}")
-                messagebox.showinfo("IHQ Completado", f"Archivo generado:\n{output_path}")
-            except Exception as e:
-                self._log(f"Error IHQ: {e}")
-                messagebox.showerror("Error IHQ", str(e))
-        threading.Thread(target=_worker, daemon=True).start()
+        config = configparser.ConfigParser(interpolation=None)
+        config_path = Path(__file__).resolve().parent / 'config.ini'
+        config.read(config_path, encoding='utf-8')
+
+        tesseract_cmd = None
+        if sys.platform.startswith("win"):
+            tesseract_cmd = config.get('PATHS', 'WINDOWS_TESSERACT', fallback=None)
+        elif sys.platform.startswith("darwin"):
+            tesseract_cmd = config.get('PATHS', 'MACOS_TESSERACT', fallback=None)
+        else: # Asumimos Linux/otro
+            tesseract_cmd = config.get('PATHS', 'LINUX_TESSERACT', fallback=None)
+
+        if tesseract_cmd and Path(tesseract_cmd).exists():
+            pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+            print(f"Tesseract OCR configurado en: {tesseract_cmd}")
+        else:
+            print("ADVERTENCIA: No se encontró la ruta de Tesseract en config.ini o la ruta no es válida.")
+            print("El sistema intentará usar la variable de entorno PATH.")
+
     except Exception as e:
-        try:
-            self._log(f"Error inesperado IHQ: {e}")
-        except Exception:
-            pass
-
-from ui import HUVOCRSystem as _UI
-_UI.start_processing_ihq_avanzado = _start_processing_ihq_avanzado
+        print(f"Error al configurar Tesseract desde config.ini: {e}")
+        print("Se continuará usando la configuración por defecto de Pytesseract.")
 
 
-def main() -> None:
-    """Inicializa la interfaz y arranca el sistema."""
-    root = tk.Tk()
-    HUVOCRSystem(root)
-    root.mainloop()
+def main():
+    """
+    Función principal que configura el entorno y lanza la aplicación.
+    """
+    print("Iniciando EVARISIS Gestor H.U.V...")
+    
+    # 1. Configuramos Tesseract antes de que cualquier otra cosa lo necesite
+    configure_tesseract()
+    
+    # 2. Creamos una instancia de nuestra nueva clase App y la ejecutamos
+    #    La clase App ahora maneja su propia ventana y ciclo de vida.
+    app = App()
+    app.mainloop()
+    
+    print("Aplicación cerrada. ¡Hasta luego!")
 
 
 if __name__ == "__main__":
+    # Este es el único punto de ejecución del programa.
     main()
-

@@ -1,392 +1,371 @@
-#ui.py:
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""Interfaz gráfica del sistema OCR HUV."""
-
+# ui.py
+import customtkinter as ctk
+from tkinter import filedialog, messagebox, ttk
 import threading
-from datetime import datetime
-from pathlib import Path
-import configparser
-
+import os
 import pandas as pd
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-from openpyxl import load_workbook
-from openpyxl.styles import Font, Alignment, PatternFill
+import seaborn as sns
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from datetime import datetime
 
-from ocr_processing import pdf_to_text_enhanced
-from data_extraction import process_text_to_excel_rows, detect_report_type
+# Módulos del proyecto
+import procesador_ihq_biomarcadores
+import database_manager
 
-_config = configparser.ConfigParser(interpolation=None)
-_config.read(Path(__file__).resolve().parent / "config.ini", encoding="utf-8")
+# --- Configuración de Estilo Profesional ---
+ctk.set_appearance_mode("Dark")
+ctk.set_default_color_theme("blue")
+sns.set_theme(style="darkgrid", rc={"axes.facecolor": "#343638", "grid.color": "#4a4d50", 
+                                   "figure.facecolor": "#2b2b2b", "text.color": "white",
+                                   "xtick.color": "white", "ytick.color": "white",
+                                   "axes.labelcolor": "white", "axes.titlecolor": "white"})
 
-TIMESTAMP_FORMAT = _config.get("OUTPUT", "TIMESTAMP_FORMAT", fallback="%Y%m%d_%H%M%S")
-OUTPUT_FILENAME = _config.get("OUTPUT", "OUTPUT_FILENAME", fallback="informes_medicos")
+class App(ctk.CTk):
+    def __init__(self):
+        super().__init__()
 
-WINDOW_WIDTH = _config.getint("INTERFACE", "WINDOW_WIDTH", fallback=900)
-WINDOW_HEIGHT = _config.getint("INTERFACE", "WINDOW_HEIGHT", fallback=700)
-LOG_HEIGHT = _config.getint("INTERFACE", "LOG_HEIGHT", fallback=8)
+        self.title("EVARISIS Gestor H.U.V v2.5")
+        self.geometry("1280x800")
+        self.minsize(1024, 768)
 
+        self.master_df = pd.DataFrame() # DataFrame maestro que sirve como única fuente de verdad
 
-class HUVOCRSystem:
-    """Interfaz basada en Tkinter para procesar informes PDF."""
+        # --- Layout Principal Adaptable ---
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
 
-    def __init__(self, root):
-        self.root = root
-        root.title("Sistema OCR - Hospital Universitario del Valle")
-        root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
-        root.configure(bg="#f8f9fa")
+        # --- Frame de Navegación (Izquierda) ---
+        self.nav_frame = ctk.CTkFrame(self, width=220, corner_radius=0)
+        self.nav_frame.grid(row=0, column=0, sticky="nswe")
+        self.nav_frame.grid_rowconfigure(4, weight=1)
 
-        self.files = []
-        self.output_dir = ""
+        self.logo_label = ctk.CTkLabel(self.nav_frame, text="EVARISIS", font=ctk.CTkFont(size=24, weight="bold"))
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(30, 15))
 
-        self._setup_gui()
+        self.btn_procesar = ctk.CTkButton(self.nav_frame, text="Procesar PDFs", command=self.show_procesar_frame, height=40)
+        self.btn_procesar.grid(row=1, column=0, padx=20, pady=15)
 
-    # Configuración de la interfaz
-    def _setup_gui(self):
-        title_frame = tk.Frame(self.root, bg="#f8f9fa")
-        title_frame.pack(pady=15, fill="x")
+        self.btn_visualizar = ctk.CTkButton(self.nav_frame, text="Visualizar Datos", command=self.show_visualizar_frame, height=40)
+        self.btn_visualizar.grid(row=2, column=0, padx=20, pady=15)
+        
+        self.btn_dashboard = ctk.CTkButton(self.nav_frame, text="Dashboard Analítico", command=self.show_dashboard_frame, height=40)
+        self.btn_dashboard.grid(row=3, column=0, padx=20, pady=15)
+        
+        self.theme_switch = ctk.CTkSwitch(self.nav_frame, text="Modo Claro", command=self.change_theme)
+        self.theme_switch.grid(row=5, column=0, padx=20, pady=20, sticky="s")
 
-        title_label = tk.Label(
-            title_frame,
-            text="SISTEMA OCR - HOSPITAL UNIVERSITARIO DEL VALLE",
-            font=("Arial", 16, "bold"),
-            bg="#f8f9fa",
-            fg="#2c3e50",
-        )
-        title_label.pack()
+        # --- Contenedor Principal ---
+        self.main_container = ctk.CTkFrame(self, fg_color="transparent")
+        self.main_container.grid(row=0, column=1, sticky="nswe", padx=15, pady=15)
+        self.main_container.grid_columnconfigure(0, weight=1)
+        self.main_container.grid_rowconfigure(0, weight=1)
 
-        subtitle_label = tk.Label(
-            title_frame,
-            text="Extracción automatizada de informes de patología",
-            font=("Arial", 10),
-            bg="#f8f9fa",
-            fg="#7f8c8d",
-        )
-        subtitle_label.pack()
+        # --- Frames de cada vista ---
+        self.procesar_frame = self._create_procesar_frame()
+        self.visualizar_frame = self._create_visualizar_frame()
+        self.dashboard_frame = self._create_dashboard_frame()
 
-        button_frame = tk.Frame(self.root, bg="#f8f9fa")
-        button_frame.pack(pady=10, fill="x", padx=20)
+        self.show_procesar_frame()
 
-        tk.Button(
-            button_frame,
-            text="📄 Añadir PDFs",
-            command=self.add_files,
-            bg="#3498db",
-            fg="white",
-            padx=20,
-            pady=10,
-            font=("Arial", 10, "bold"),
-        ).pack(side="left", padx=5)
+    # --- Lógica de Navegación ---
+    def show_frame(self, frame_to_show):
+        for frame in [self.procesar_frame, self.visualizar_frame, self.dashboard_frame]:
+            frame.grid_forget()
+        frame_to_show.grid(row=0, column=0, sticky="nswe")
 
-        tk.Button(
-            button_frame,
-            text="📁 Carpeta PDFs",
-            command=self.add_folder,
-            bg="#2ecc71",
-            fg="white",
-            padx=20,
-            pady=10,
-            font=("Arial", 10, "bold"),
-        ).pack(side="left", padx=5)
+    def show_procesar_frame(self):
+        self.show_frame(self.procesar_frame)
 
-        tk.Button(
-            button_frame,
-            text="🗑️ Limpiar",
-            command=self.clear_files,
-            bg="#e74c3c",
-            fg="white",
-            padx=20,
-            pady=10,
-            font=("Arial", 10, "bold"),
-        ).pack(side="right", padx=5)
+    def show_visualizar_frame(self):
+        self.show_frame(self.visualizar_frame)
+        self.refresh_data_and_table()
 
-        list_frame = tk.Frame(self.root, bg="#f8f9fa")
-        list_frame.pack(fill="both", expand=True, padx=20, pady=5)
+    def show_dashboard_frame(self):
+        self.show_frame(self.dashboard_frame)
+        self.cargar_dashboard()
 
-        list_label = tk.Label(
-            list_frame,
-            text="Archivos seleccionados:",
-            font=("Arial", 12, "bold"),
-            bg="#f8f9fa",
-        )
-        list_label.pack(anchor="w", pady=(0, 5))
+    # --- Creación de Vistas ---
+    def _create_procesar_frame(self):
+        frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
+        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_rowconfigure(1, weight=1)
+        
+        top_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        top_frame.grid(row=0, column=0, sticky="ew", pady=(0, 20))
+        top_frame.grid_columnconfigure(0, weight=1)
 
-        list_container = tk.Frame(list_frame)
-        list_container.pack(fill="both", expand=True)
+        ctk.CTkLabel(top_frame, text="Módulo de Procesamiento de Informes IHQ", font=ctk.CTkFont(size=20, weight="bold")).grid(row=0, column=0, sticky="w")
+        
+        button_frame = ctk.CTkFrame(top_frame)
+        button_frame.grid(row=1, column=0, pady=(15,0), sticky="w")
 
-        self.file_listbox = tk.Listbox(
-            list_container,
-            font=("Consolas", 10),
-            bg="white",
-            selectmode=tk.EXTENDED,
-            height=12,
-        )
-        scrollbar = tk.Scrollbar(list_container, orient="vertical")
-        self.file_listbox.config(yscrollcommand=scrollbar.set)
-        scrollbar.config(command=self.file_listbox.yview)
-        self.file_listbox.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        self.select_files_button = ctk.CTkButton(button_frame, text="Seleccionar Archivos PDF", command=self.select_files, height=35)
+        self.select_files_button.pack(side="left", padx=(0, 10))
 
-        output_frame = tk.Frame(self.root, bg="#f8f9fa")
-        output_frame.pack(pady=15, fill="x", padx=20)
+        self.start_button = ctk.CTkButton(button_frame, text="Iniciar Procesamiento", command=self.start_processing, state="disabled", height=35)
+        self.start_button.pack(side="left")
 
-        tk.Button(
-            output_frame,
-            text="📂 Carpeta de Salida",
-            command=self.select_output_dir,
-            bg="#f39c12",
-            fg="white",
-            padx=15,
-            pady=8,
-            font=("Arial", 10, "bold"),
-        ).pack(side="left", padx=5)
+        self.log_textbox = ctk.CTkTextbox(frame, state="disabled", font=("Consolas", 12))
+        self.log_textbox.grid(row=1, column=0, sticky="nsew")
+        
+        self.pdf_files = []
+        return frame
 
-        self.output_label = tk.Label(
-            output_frame,
-            text="No seleccionada",
-            bg="#f8f9fa",
-            font=("Arial", 10),
-        )
-        self.output_label.pack(side="left", padx=15)
+    def _create_visualizar_frame(self):
+        frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
+        frame.grid_columnconfigure(0, weight=3)
+        frame.grid_columnconfigure(1, weight=1)
+        frame.grid_rowconfigure(1, weight=1)
 
-        process_frame = tk.Frame(self.root, bg="#f8f9fa")
-        process_frame.pack(pady=15, fill="x", padx=20)
+        ctk.CTkLabel(frame, text="Base de Datos de Informes", font=ctk.CTkFont(size=20, weight="bold")).grid(row=0, column=0, columnspan=2, pady=(0, 10), sticky="w")
+        
+        table_frame = ctk.CTkFrame(frame)
+        table_frame.grid(row=1, column=0, sticky="nsew", padx=(0, 10))
+        table_frame.grid_rowconfigure(1, weight=1)
+        table_frame.grid_columnconfigure(0, weight=1)
+        
+        self.search_var = ctk.StringVar()
+        self.search_var.trace_add("write", self.filter_tabla)
+        search_entry = ctk.CTkEntry(table_frame, textvariable=self.search_var, placeholder_text="Buscar por N° Petición, Nombre o Apellido...")
+        search_entry.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
 
-        self.progress_bar = ttk.Progressbar(process_frame, length=500, mode="determinate")
-        self.progress_bar.pack(side="left", padx=10, expand=True, fill="x")
+        style = self.setup_treeview_style()
+        self.tree = ttk.Treeview(table_frame, show='headings', style="Custom.Treeview")
+        self.tree.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0,10))
+        self.tree.bind("<<TreeviewSelect>>", self.mostrar_detalle_registro)
+        
+        self.detail_frame = ctk.CTkFrame(frame)
+        self.detail_frame.grid(row=1, column=1, sticky="nsew")
+        self.detail_frame.grid_columnconfigure(0, weight=1)
+        
+        ctk.CTkLabel(self.detail_frame, text="Detalles del Registro", font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, pady=10, padx=10)
+        self.detail_textbox = ctk.CTkTextbox(self.detail_frame, state="disabled", wrap="word", font=("Calibri", 14))
+        self.detail_textbox.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0,10))
+        self.detail_frame.grid_rowconfigure(1, weight=1)
 
-        tk.Button(
-            process_frame,
-            text="Analizar Biomarcadores IHQ (v1.1)",
-            command=self.start_processing_ihq_avanzado,
-            bg="#16a085",
-            fg="white",
-            padx=15,
-            pady=10,
-            font=("Arial", 10, "bold"),
-        ).pack(side="left", padx=5)
+        return frame
 
-        tk.Button(
-            process_frame,
-            text="🚀 PROCESAR INFORMES",
-            command=self.start_processing,
-            bg="#9b59b6",
-            fg="white",
-            padx=25,
-            pady=12,
-            font=("Arial", 12, "bold"),
-        ).pack(side="right", padx=10)
+    def _create_dashboard_frame(self):
+        frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
+        frame.grid_rowconfigure(1, weight=0)
+        frame.grid_rowconfigure(2, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
 
-        log_frame = tk.Frame(self.root, bg="#f8f9fa")
-        log_frame.pack(fill="both", expand=True, padx=20, pady=(5, 20))
+        ctk.CTkLabel(frame, text="Dashboard de Análisis Estadístico", font=ctk.CTkFont(size=20, weight="bold")).grid(row=0, column=0, pady=(0, 10), sticky="w")
+        
+        self.kpi_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        self.kpi_frame.grid(row=1, column=0, sticky="ew", pady=10)
+        
+        self.dashboard_canvas_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        self.dashboard_canvas_frame.grid(row=2, column=0, sticky="nsew")
 
-        log_label = tk.Label(
-            log_frame,
-            text="Registro de procesamiento:",
-            font=("Arial", 12, "bold"),
-            bg="#f8f9fa",
-        )
-        log_label.pack(anchor="w", pady=(0, 5))
+        return frame
+        
+    # --- Lógica de Funcionalidades ---
+    def log_to_widget(self, message):
+        self.log_textbox.configure(state="normal")
+        self.log_textbox.insert("end", f"[{datetime.now().strftime('%H:%M:%S')}] {message}\n")
+        self.log_textbox.see("end")
+        self.log_textbox.configure(state="disabled")
 
-        log_container = tk.Frame(log_frame)
-        log_container.pack(fill="both", expand=True)
-
-        self.log_text = tk.Text(
-            log_container,
-            height=LOG_HEIGHT,
-            bg="#2c3e50",
-            fg="#ecf0f1",
-            font=("Consolas", 9),
-            wrap="word",
-        )
-        log_scrollbar = tk.Scrollbar(log_container, orient="vertical")
-        self.log_text.config(yscrollcommand=log_scrollbar.set)
-        log_scrollbar.config(command=self.log_text.yview)
-        self.log_text.pack(side="left", fill="both", expand=True)
-        log_scrollbar.pack(side="right", fill="y")
-
-    # Manejo de archivos
-    def add_files(self):
-        files = filedialog.askopenfilenames(
-            title="Seleccionar informes PDF",
-            filetypes=[("Archivos PDF", "*.pdf"), ("Todos los archivos", "*.*")],
-        )
-        added = 0
-        for file_path in files:
-            if file_path not in self.files:
-                self.files.append(file_path)
-                filename = Path(file_path).name
-                self.file_listbox.insert(tk.END, f"📄 {filename}")
-                added += 1
-        self._log(f"➕ {added} archivos añadidos. Total: {len(self.files)}")
-
-    def add_folder(self):
-        folder = filedialog.askdirectory(title="Seleccionar carpeta con PDFs")
-        if not folder:
-            return
-        pdf_files = list(Path(folder).glob("*.pdf"))
-        added = 0
-        for pdf_path in pdf_files:
-            file_str = str(pdf_path)
-            if file_str not in self.files:
-                self.files.append(file_str)
-                self.file_listbox.insert(tk.END, f"📄 {pdf_path.name}")
-                added += 1
-        self._log(f"📁 {added} archivos añadidos desde carpeta. Total: {len(self.files)}")
-
-    def clear_files(self):
-        self.files.clear()
-        self.file_listbox.delete(0, tk.END)
-        self._log("🗑️ Lista de archivos limpiada")
-
-    def select_output_dir(self):
-        directory = filedialog.askdirectory(title="Seleccionar carpeta de salida")
-        if directory:
-            self.output_dir = directory
-            self.output_label.config(text=f"📁 {directory}")
-            self._log(f"📂 Carpeta de salida: {directory}")
-
-    # Logs y procesamiento
-    def _log(self, message):
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        self.log_text.insert(tk.END, f"[{timestamp}] {message}\n")
-        self.log_text.see(tk.END)
-        self.root.update_idletasks()
+    def select_files(self):
+        self.pdf_files = filedialog.askopenfilenames(title="Seleccione archivos PDF", filetypes=[("PDF", "*.pdf")])
+        if self.pdf_files:
+            self.log_to_widget(f"Seleccionados {len(self.pdf_files)} archivos.")
+            self.start_button.configure(state="normal")
+        else:
+            self.log_to_widget("Selección cancelada.")
+            self.start_button.configure(state="disabled")
 
     def start_processing(self):
-        if not self.files:
-            messagebox.showwarning("Sin archivos", "Seleccione al menos un archivo PDF para procesar.")
+        if not self.pdf_files:
+            messagebox.showwarning("Advertencia", "Por favor, seleccione archivos PDF primero.")
             return
-        if not self.output_dir:
-            messagebox.showwarning("Sin carpeta de salida", "Seleccione una carpeta para guardar los resultados.")
+        
+        self.start_button.configure(state="disabled")
+        self.select_files_button.configure(state="disabled")
+        self.log_to_widget("="*50)
+        self.log_to_widget("INICIANDO PROCESAMIENTO...")
+        
+        threading.Thread(target=self.processing_thread, daemon=True).start()
+
+    def processing_thread(self):
+        try:
+            output_dir = os.path.dirname(self.pdf_files[0])
+            num_records = procesador_ihq_biomarcadores.process_ihq_paths(self.pdf_files, output_dir)
+            self.log_to_widget(f"PROCESO COMPLETADO. Se guardaron {num_records} registros en la base de datos.")
+            messagebox.showinfo("Éxito", f"Proceso finalizado. Se guardaron {num_records} registros.")
+        except Exception as e:
+            self.log_to_widget(f"ERROR: {e}")
+            messagebox.showerror("Error", f"Ocurrió un error durante el procesamiento:\n{e}")
+        finally:
+            self.start_button.configure(state="normal")
+            self.select_files_button.configure(state="normal")
+
+    def refresh_data_and_table(self):
+        try:
+            database_manager.init_db()
+            self.master_df = database_manager.get_all_records_as_dataframe()
+            self._populate_treeview(self.master_df)
+        except Exception as e:
+            messagebox.showerror("Error de Base de Datos", f"No se pudieron cargar los datos: {e}")
+    
+    def _populate_treeview(self, df_to_display):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        
+        if df_to_display.empty: return
+
+        cols_to_show = ["N. peticion (0. Numero de biopsia)", "Primer nombre", "Primer apellido", "Fecha finalizacion (3. Fecha del informe)", "Malignidad", "Organo (1. Muestra enviada a patología)"]
+        df_display = df_to_display[cols_to_show]
+
+        self.tree["columns"] = list(df_display.columns)
+        for col in df_display.columns:
+            self.tree.heading(col, text=col.split('(')[0].strip())
+        
+        self.tree.tag_configure('oddrow', background='#343638')
+        self.tree.tag_configure('evenrow', background='#2a2d2e')
+        
+        for index, row in df_display.iterrows():
+            tag = 'evenrow' if index % 2 == 0 else 'oddrow'
+            self.tree.insert("", "end", values=list(row), iid=index, tags=(tag,))
+
+    def filter_tabla(self, *args):
+        query = self.search_var.get().lower()
+        if not query:
+            self._populate_treeview(self.master_df)
             return
-        threading.Thread(target=self._process_files, daemon=True).start()
 
-    def _process_files(self):
-        total_files = len(self.files)
-        self.progress_bar["maximum"] = total_files
-        all_rows = []
-        processed_count = 0
-        error_count = 0
-        self._log(f"🚀 Iniciando procesamiento de {total_files} archivos")
-        self._log("=" * 60)
-        for idx, pdf_path in enumerate(self.files, 1):
-            filename = Path(pdf_path).name
-            self._log(f"📄 [{idx}/{total_files}] Procesando: {filename}")
-            try:
-                self._log("   🔍 Extrayendo texto con OCR...")
-                pdf_text = pdf_to_text_enhanced(pdf_path)
+        df = self.master_df.copy()
+        search_cols = ["N. peticion (0. Numero de biopsia)", "Primer nombre", "Primer apellido"]
+        for col in search_cols:
+            df[col] = df[col].astype(str)
 
-                # ----- INICIO DE CÓDIGO DE DEPURACIÓN -----
-                # Guardar el texto crudo del OCR en un archivo para análisis
-                debug_filename = f"DEBUG_OCR_OUTPUT_{filename}.txt"
-                try:
-                    with open(Path(self.output_dir) / debug_filename, "w", encoding="utf-8") as f:
-                        f.write(pdf_text)
-                    self._log(f"   🐛 ¡Texto de OCR guardado en {debug_filename} para depuración!")
-                except Exception as e:
-                    self._log(f"   ❌ No se pudo guardar el archivo de depuración: {e}")
-                # ----- FIN DE CÓDIGO DE DEPURACIÓN -----
+        mask = (df[search_cols[0]].str.lower().str.contains(query, na=False) |
+                df[search_cols[1]].str.lower().str.contains(query, na=False) |
+                df[search_cols[2]].str.lower().str.contains(query, na=False))
+        self._populate_treeview(df[mask])
 
-                if not pdf_text.strip():
-                    self._log("   ⚠️  Advertencia: No se extrajo texto del PDF")
-                    continue
-                self._log("   📊 Extrayendo datos estructurados...")
-                tipo_informe = detect_report_type(pdf_text)
-                excel_rows = process_text_to_excel_rows(pdf_text, filename)
-                extracted_data = {'tipo_informe': tipo_informe, 'specimens': [None] * len(excel_rows)}
-                # ----- INICIO DE CÓDIGO DE DEPURACIÓN DE MALIGNIDAD -----
-                print(f"\n--- DEBUG: {filename} ---")
-                diagnostico_texto = extracted_data.get('diagnostico', '¡¡¡DIAGNÓSTICO NO ENCONTRADO!!!')
-                microscopica_texto = extracted_data.get('descripcion_microscopica', '¡¡¡DESCRIPCIÓN MICROSCÓPICA NO ENCONTRADA!!!')
-                
-                print(f"TEXTO DEL DIAGNÓSTICO EXTRAÍDO:\n---\n{diagnostico_texto}\n---")
-                print(f"TEXTO MICROSCÓPICO EXTRAÍDO:\n---\n{microscopica_texto}\n---")
-                print(f"RESULTADO DE MALIGNIDAD CALCULADO: {extracted_data.get('malignidad')}")
-                print("--- FIN DEBUG ---\n")
-                # ----- FIN DE CÓDIGO DE DEPURACIÓN -----
-                fuente = extracted_data.get('fecha_ordenamiento_fuente', '')
-                if fuente:
-                    self._log(f"   🗓️ Fecha ordenamiento desde: {fuente}")
-                if extracted_data.get('eps_normalizado'):
-                    self._log("   🔧 EPS normalizada")
-                if extracted_data.get('servicio_normalizado'):
-                    self._log("   🔧 Servicio normalizado")
-                self._log("   📋 Mapeando a formato Excel...")
-                map_to_excel_format = lambda *args, **kwargs: excel_rows
-                excel_rows = map_to_excel_format(extracted_data, filename)
-                all_rows.extend(excel_rows)
-                processed_count += 1
-                tipo_informe = extracted_data.get('tipo_informe', 'DESCONOCIDO')
-                num_specimens = len(extracted_data.get('specimens', []))
-                self._log(f"   ✅ Completado - Tipo: {tipo_informe} - Especímenes: {num_specimens}")
-            except Exception as e:
-                error_count += 1
-                self._log(f"   ❌ Error: {str(e)}")
-            self.progress_bar["value"] = idx
-            self.root.update_idletasks()
-        if all_rows:
-            self._log("=" * 60)
-            self._log("💾 Generando archivo Excel...")
-            try:
-                df = pd.DataFrame(all_rows)
-                timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)
-                output_filename = f"{OUTPUT_FILENAME}_{timestamp}.xlsx"
-                output_path = Path(self.output_dir) / output_filename
-                df.to_excel(output_path, index=False, engine="openpyxl")
-                # --- INICIO DE CÓDIGO PARA FORMATEAR ENCABEZADOS ---
-                self._log("   ✨ Aplicando formato profesional a encabezados...")
-                wb = load_workbook(output_path)
-                ws = wb.active
+    def mostrar_detalle_registro(self, event):
+        selected_item = self.tree.focus()
+        if not selected_item: return
+        
+        item_index = int(selected_item)
+        record = self.master_df.loc[item_index]
+        
+        self.detail_textbox.configure(state="normal")
+        self.detail_textbox.delete("1.0", "end")
+        
+        details_text = ""
+        for key, value in record.items():
+            if pd.notna(value) and str(value).strip():
+                details_text += f"{key.split('(')[0].strip()}:\n{value}\n{'-'*30}\n"
+        
+        self.detail_textbox.insert("1.0", details_text)
+        self.detail_textbox.configure(state="disabled")
 
-                # Definir estilos: fuente profesional y ajuste de texto
-                header_font = Font(name='Calibri', size=11, bold=True, color='FFFFFF')
-                header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-                header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+    def cargar_dashboard(self):
+        for widget in self.kpi_frame.winfo_children(): widget.destroy()
+        for widget in self.dashboard_canvas_frame.winfo_children(): widget.destroy()
 
-                # Aplicar estilos a cada celda del encabezado (primera fila)
-                for cell in ws[1]:
-                    cell.font = header_font
-                    cell.alignment = header_alignment
-                    cell.fill = header_fill
+        try:
+            df = database_manager.get_all_records_as_dataframe()
+            if df.empty:
+                ctk.CTkLabel(self.dashboard_canvas_frame, text="No hay datos suficientes para generar análisis.").pack(pady=20)
+                return
 
-                # Ajustar el ancho de las columnas para una mejor visualización
-                for col in ws.columns:
-                    max_length = 0
-                    column = col[0].column_letter
-                    for cell in col:
-                        try:
-                            if len(str(cell.value)) > max_length:
-                                max_length = len(cell.value)
-                        except:
-                            pass
-                    adjusted_width = (max_length + 2)
-                    ws.column_dimensions[column].width = min(adjusted_width, 50) # Limitar ancho máximo
+            # --- KPIs ---
+            kpi_col = 0
+            self._create_kpi_card("Total Informes", f"{len(df)}", kpi_col); kpi_col += 1
 
-                # Guardar el archivo Excel con el nuevo formato
-                wb.save(output_path)
-                
-                self._log("=" * 60)
-                self._log("🎉 PROCESAMIENTO COMPLETADO")
-                self._log(f"✅ Archivos procesados exitosamente: {processed_count}")
-                self._log(f"❌ Archivos con errores: {error_count}")
-                self._log(f"📊 Total de registros generados: {len(all_rows)}")
-                self._log(f"📁 Archivo guardado: {output_filename}")
-                self._log("=" * 60)
-                mensaje = "\n".join([
-                    "✅ Procesamiento exitoso!",
-                    "",
-                    f"📊 {processed_count} archivos procesados",
-                    f"📄 {len(all_rows)} registros generados",
-                    f"📁 Archivo: {output_filename}",
-                    "",
-                    f"El archivo Excel ha sido guardado en:\n{output_path}",
-                ])
-                messagebox.showinfo("Procesamiento Completado", mensaje)
-            except Exception as e:
-                self._log(f"❌ Error generando Excel: {str(e)}")
-                messagebox.showerror("Error", f"Error generando archivo Excel:\n{str(e)}")
+            if 'Malignidad' in df.columns and not df['Malignidad'].dropna().empty:
+                tasa_malignidad = (df['Malignidad'].value_counts(normalize=True).get('PRESENTE', 0) * 100)
+                self._create_kpi_card("Tasa Malignidad", f"{tasa_malignidad:.1f}%", kpi_col); kpi_col += 1
+            
+            if 'IHQ_KI-67' in df.columns:
+                ki_67_series = pd.to_numeric(df['IHQ_KI-67'].str.replace('%', ''), errors='coerce').dropna()
+                if not ki_67_series.empty:
+                    ki67_avg = ki_67_series.mean()
+                    self._create_kpi_card("Ki-67 Promedio", f"{ki67_avg:.1f}%", kpi_col); kpi_col += 1
+            
+            # --- Gráficos ---
+            fig = Figure(figsize=(12, 10), dpi=100)
+            fig.subplots_adjust(hspace=0.6, wspace=0.3)
+            plot_position = 1
+            
+            if 'IHQ_KI-67' in df.columns:
+                ki_67_series = pd.to_numeric(df['IHQ_KI-67'].str.replace('%', ''), errors='coerce').dropna()
+                if not ki_67_series.empty:
+                    ax1 = fig.add_subplot(2, 2, plot_position); plot_position += 1
+                    sns.histplot(x=ki_67_series, kde=True, ax=ax1, color="#3498db")
+                    ax1.set_title('Distribución de Ki-67')
+
+            if 'IHQ_RECEPTOR_ESTROGENO' in df.columns and 'IHQ_RECEPTOR_PROGESTAGENOS' in df.columns:
+                df_re_pr = df[['IHQ_RECEPTOR_ESTROGENO', 'IHQ_RECEPTOR_PROGESTAGENOS']].dropna()
+                if not df_re_pr.empty:
+                    ax2 = fig.add_subplot(2, 2, plot_position); plot_position += 1
+                    df['RE_Estado'] = df['IHQ_RECEPTOR_ESTROGENO'].str.contains('POSITIVO', na=False)
+                    df['PR_Estado'] = df['IHQ_RECEPTOR_PROGESTAGENOS'].str.contains('POSITIVO', na=False)
+                    co_ocurrencia = df.groupby(['RE_Estado', 'PR_Estado']).size().unstack(fill_value=0)
+                    all_labels = [False, True]
+                    co_ocurrencia = co_ocurrencia.reindex(index=all_labels, columns=all_labels, fill_value=0)
+                    co_ocurrencia.index = ['RE Negativo', 'RE Positivo']
+                    co_ocurrencia.columns = ['PR Negativo', 'PR Positivo']
+                    co_ocurrencia.plot(kind='bar', stacked=True, ax=ax2, colormap='viridis')
+                    ax2.set_title('Co-ocurrencia RE y PR')
+                    ax2.tick_params(axis='x', rotation=0)
+
+            if 'Organo (1. Muestra enviada a patología)' in df.columns and not df['Organo (1. Muestra enviada a patología)'].dropna().empty:
+                ax3 = fig.add_subplot(2, 2, plot_position); plot_position += 1
+                top_organos = df['Organo (1. Muestra enviada a patología)'].value_counts().nlargest(5)
+                sns.barplot(x=top_organos.index, y=top_organos.values, ax=ax3, palette='rocket')
+                ax3.set_title('Top 5 Órganos Analizados')
+                ax3.tick_params(axis='x', rotation=45, ha='right')
+            
+            if 'Fecha finalizacion (3. Fecha del informe)' in df.columns:
+                fechas = pd.to_datetime(df['Fecha finalizacion (3. Fecha del informe)'], dayfirst=True, errors='coerce').dropna()
+                if not fechas.empty:
+                    ax4 = fig.add_subplot(2, 2, plot_position); plot_position += 1
+                    informes_mes = fechas.to_frame(name='fecha').set_index('fecha').resample('M').size()
+                    informes_mes.plot(kind='line', ax=ax4, marker='o', color='#f1c40f')
+                    ax4.set_title('Informes Procesados por Mes')
+                    # ▼▼▼ INICIO DE LA CORRECCIÓN ▼▼▼
+                    ax4.set(xlabel="Mes") # Usamos .set() que es más robusto
+                    # ▲▲▲ FIN DE LA CORRECCIÓN ▲▲▲
+            
+            if plot_position > 1:
+                canvas = FigureCanvasTkAgg(fig, master=self.dashboard_canvas_frame)
+                canvas.draw()
+                canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
+            else:
+                 ctk.CTkLabel(self.dashboard_canvas_frame, text="No hay suficientes datos válidos para generar gráficos.").pack(pady=20)
+
+        except Exception as e:
+            messagebox.showerror("Error de Dashboard", f"No se pudo generar el dashboard: {e}")
+            
+    def _create_kpi_card(self, title, value, col):
+        self.kpi_frame.grid_columnconfigure(col, weight=1)
+        card = ctk.CTkFrame(self.kpi_frame, border_width=1, border_color="#565b5e")
+        card.grid(row=0, column=col, sticky="ew", padx=10)
+        ctk.CTkLabel(card, text=title, font=ctk.CTkFont(size=14, weight="bold")).pack(pady=(10, 2))
+        ctk.CTkLabel(card, text=value, font=ctk.CTkFont(size=22)).pack(pady=(2, 10))
+
+    def setup_treeview_style(self):
+        style = ttk.Style()
+        style.theme_use("default")
+        style.configure("Custom.Treeview", background="#2a2d2e", foreground="white", fieldbackground="#343638", borderwidth=0, rowheight=25)
+        style.map('Custom.Treeview', background=[('selected', '#22559b')])
+        style.configure("Custom.Treeview.Heading", background="#565b5e", foreground="white", relief="flat", font=('Calibri', 12, 'bold'))
+        style.map("Custom.Treeview.Heading", background=[('active', '#343638')])
+        return style
+        
+    def change_theme(self):
+        if self.theme_switch.get() == 1:
+            ctk.set_appearance_mode("Light")
         else:
-            self._log("⚠️ No se procesó ningún archivo exitosamente")
-            messagebox.showwarning("Sin resultados", "No se pudo extraer información de ningún archivo")
+            ctk.set_appearance_mode("Dark")
+
+if __name__ == "__main__":
+    app = App()
+    app.mainloop()

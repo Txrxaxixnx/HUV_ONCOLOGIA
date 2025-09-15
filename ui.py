@@ -47,8 +47,7 @@ class App(ctk.CTk):
 
         # ---------- Ventana principal ----------
         self.title("EVARISIS Gestor HUV")
-        self.geometry("1400x860")
-        self.minsize(1200, 780)
+        self.state('zoomed')       # Y añadimos esta, ¡listo el pollo!
         self.configure(fg_color=BG)
 
         self.master_df = pd.DataFrame()  # DataFrame maestro (fuente única de verdad)
@@ -155,6 +154,8 @@ class App(ctk.CTk):
 
         # Vista inicial
         self.show_procesar_frame()
+        self.after(10, self.state, 'zoomed')
+
 
     # =========================
     # Helpers UI (KPI y Status)

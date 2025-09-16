@@ -133,6 +133,48 @@ def _extract_estudios_solicitados(text: str) -> str:
     dedup = list(dict.fromkeys(tokens))
     return ', '.join(dedup)
 
+def _extract_organo_header(text: str) -> str:
+    """
+    Extrae el valor de la columna 'Organo' del bloque 'Estudios solicitados'.
+    Soporta OCR con espacios irregulares y hace fallback si no hay encabezado limpio.
+    """
+    hdr = re.search(r'(?is)estudios\s+solicitados.*?\n([^\n]+)\n([^\n]+)', text)
+    if hdr:
+        header_line = re.sub(r'\s+', ' ', hdr.group(1)).strip().upper()
+        data_line   = re.sub(r'\s{2,}', '  ', hdr.group(2)).strip()
+
+        # Intento directo por columnas: tomar lo que va entre 'ORGANO' y 'FECHA'
+        m = re.search(r'(?i)ORGANO\s+([A-ZÁÉÍÓÚÑ0-9 .+/+-]+?)\s+(?:FECHA|TOMA|$)', header_line + "\n" + data_line)
+        if m:
+            cand = m.group(1)
+            # En OCR el match puede arrastrar fragmentos; limpiemos tokens obvios
+            cand = re.sub(r'\s{2,}', ' ', cand).strip(' .-')
+            return cand
+
+        # Si no funcionó por columnas, intenta un recorte por nombre de la columna
+        if 'ORGANO' in header_line:
+            try:
+                org_idx   = header_line.index('ORGANO')
+                # Si existe 'FECHA', cortamos antes de esa palabra; si no, hasta el final
+                end_idx   = header_line.find('FECHA', org_idx)
+                span      = slice(org_idx, None if end_idx == -1 else end_idx)
+                # Mapear el mismo span sobre la línea de datos (heurístico de columnas monoespaciadas por OCR)
+                seg = data_line[span].strip()
+                if seg:
+                    return re.sub(r'\s{2,}', ' ', seg).strip(' .-')
+            except Exception:
+                pass
+
+    # Fallback: intenta inferir desde el primer renglón del DIAGNÓSTICO
+    m_diag = re.search(r'(?is)\bDIAGN[ÓO]STICO\b\s*\n([^\n]+)', text)
+    if m_diag:
+        head = m_diag.group(1)
+        # Tomar fragmento antes del primer punto si luce como "Pleura. Lesión. Biopsia ..."
+        parts = [p.strip() for p in head.split('.') if p.strip()]
+        if parts:
+            # Primera pieza suele ser la localización anatómica
+            return parts[0][:80]
+    return ""
 
 # -------------------------- Extracción de biomarcadores -----------------------
 
@@ -150,11 +192,12 @@ def _extract_biomarkers(text: str) -> dict:
         "IHQ_ESTUDIOS_SOLICITADOS": "",
         "IHQ_P16_ESTADO": "",
         "IHQ_P16_PORCENTAJE": "",
+        "IHQ_ORGANO": "",
     }
 
     # Estudios Solicitados (bloque multi-línea, tolerante a tabla)
     out["IHQ_ESTUDIOS_SOLICITADOS"] = _extract_estudios_solicitados(text)
-
+    out["IHQ_ORGANO"] = _extract_organo_header(text)
     # P16 (Patrones más flexibles)
     m_p16_estado = re.search(r'(?i)\bP\s*16\b[^\n]*?\b(positiv[oa]|negativ[oa])\b', text)
     if m_p16_estado:

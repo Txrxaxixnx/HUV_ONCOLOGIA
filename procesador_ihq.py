@@ -47,11 +47,11 @@ MALIGNIDAD_KEYWORDS_IHQ = [
 
 # Patrones Regex diseñados y ajustados para AMBAS plantillas de IHQ
 PATTERNS_IHQ = {
-    # CORREGIDO: Busca cualquiera de las dos frases de inicio para la descripción macroscópica.
-    'descripcion_macroscopica_ihq': r'(?:Informe de Estudios de Inmunohistoquímica|Se recibe orden para realización de inmunohistoquímica)([\s\S]+?)(?=DESCRIPCIÓN MICROSCÓPICA|RESULTADO DE INMUNOHISTOQUÍMICA)',
+    # CORREGIDO: tolerante a acentos y también cuando el PDF trae solo “DESCRIPCION MACROSCOPICA”
+    'descripcion_macroscopica_ihq': r'DESCRIPCI[ÓO]N\s+MACROSC[ÓO]PICA([\s\S]+?)(?=DESCRIPCI[ÓO]N\s+MICROSC[ÓO]PICA|RESULTADO\s+DE\s+INMUNOHISTOQU[ÍI]MICA)',
     
-    # CORREGIDO: Acepta ambos títulos para la descripción microscópica.
-    'descripcion_microscopica_ihq': r'(?:DESCRIPCIÓN MICROSCÓPICA|RESULTADO DE INMUNOHISTOQUÍMICA\.)([\s\S]+?)(?=\n\s*DIAGNÓSTICO\s*\n)',
+    # CORREGIDO: idem para el bloque microscópico
+    'descripcion_microscopica_ihq': r'(?:DESCRIPCI[ÓO]N\s+MICROSC[ÓO]PICA|RESULTADO\s+DE\s+INMUNOHISTOQU[ÍI]MICA\.?)([\s\S]+?)(?=\n\s*DIAGN[ÓO]STICO\s*\n)',
 
     'diagnostico_final_ihq': r'DIAGNÓSTICO\s*\n([\s\S]+?)(?=\s*(?:ARMANDO CORTES BUELVAS\s*\n\s*Responsable del análisis|NANCY MEJIA VARGAS\s*\n\s*Médica Patóloga)|Nota: Este informe)',
     
@@ -243,13 +243,35 @@ def extract_ihq_data(text: str) -> dict:
     # Elimina específicamente el texto basura del OCR y cualquier línea vacía resultante.
     data['diagnostico_final'] = re.sub(r'\s*\.?\s*Nanty T“M a U', '', data['diagnostico_final']).strip()
 
-    # Lógica para encontrar el órgano (intenta un método y si no, el otro)
-    organo_match = re.search(r'corresponde a "([^"]+)"', data['descripcion_macroscopica_final'], re.IGNORECASE)
-    if organo_match:
-        data['organo_final'] = organo_match.group(1).strip().replace('.', '')
-    else:
-        organo_match_alt = re.search(r'Órgano\s*:\s*([^\n]+)', data['descripcion_macroscopica_final'], re.IGNORECASE)
-        data['organo_final'] = organo_match_alt.group(1).strip() if organo_match_alt else 'No especificado'
+    # Lógica para encontrar el órgano (tolerante a OCR y variantes de redacción)
+    organo_final = ''
+
+    macro_txt = data.get('descripcion_macroscopica_final', '') or ''
+    macro_norm = _normalize_text(macro_txt)
+
+    # 1) “RÓTULO CORRESPONDIENTE A "..."” o “CORRESPONDE/ CORRESPONDIENTE A "..."”
+    for pat in [
+        r'ROTULO\s+CORRESPONDIENTE\s+A\s*["“]?([^"”\n]+)',
+        r'CORRESPONDIENTE\s+A\s*["“]?([^"”\n]+)',
+        r'CORRESPONDE\s+A\s*["“]?([^"”\n]+)',
+        r'["“]([^"”\n]+)["”]\s+CON\s+DIAGN[OÓ]STICO'  # “... ” con diagnóstico ...
+    ]:
+        m = re.search(pat, macro_norm, re.IGNORECASE)
+        if m:
+            organo_final = m.group(1).strip(' ."”')
+            break
+
+    # 2) Fallback: tabla “Estudios solicitados …  Organo”
+    if not organo_final:
+        # Captura la línea inmediatamente posterior al encabezado con la palabra ORGANO
+        mrow = re.search(r'(?i)ALMACENAMIENTO[^\n]*ORGANO[^\n]*\n([^\n]+)', text)
+        if mrow:
+            # Divide por grandes espacios entre columnas y toma la celda de órgano
+            parts = re.split(r'\s{2,}', mrow.group(1).strip())
+            if len(parts) >= 2:
+                organo_final = parts[1].strip()
+
+    data['organo_final'] = organo_final if organo_final else 'No especificado'
 
     # Lógica para encontrar la fecha de ordenamiento
     fecha_diag_match = re.search(PATTERNS_IHQ['fecha_diagnostico_ihq'], text, re.IGNORECASE)

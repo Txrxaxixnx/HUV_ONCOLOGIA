@@ -8,6 +8,7 @@ import seaborn as sns
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from datetime import datetime
+import numpy as np
 
 # =========================
 # Tema oscuro y paleta EVARISIS Gestor HUV
@@ -314,21 +315,528 @@ class App(ctk.CTk):
 
     def _create_dashboard_frame(self):
         frame = ctk.CTkFrame(self.views_container, fg_color="transparent")
-        frame.grid_rowconfigure(1, weight=0)
-        frame.grid_rowconfigure(2, weight=1)
-        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=0)  # sidebar
+        frame.grid_columnconfigure(1, weight=1)  # main area
 
-        ctk.CTkLabel(
-            frame, text="Dashboard de Análisis Estadístico", font=ctk.CTkFont(size=20, weight="bold")
-        ).grid(row=0, column=0, pady=(0, 10), sticky="w")
+        # Sidebar de filtros (colapsable)
+        self.db_filters = {
+            "fecha_desde": ctk.StringVar(value=""),
+            "fecha_hasta": ctk.StringVar(value=""),
+            "servicio": ctk.StringVar(value=""),
+            "malignidad": ctk.StringVar(value=""),
+            "responsable": ctk.StringVar(value=""),
+        }
+        self.db_sidebar_collapsed = True
+        self.db_sidebar = ctk.CTkFrame(frame, fg_color=SURFACE, corner_radius=12, width=280)
+        self.db_sidebar.grid_rowconfigure(10, weight=1)
 
-        self.kpi_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        self.kpi_frame.grid(row=1, column=0, sticky="ew", pady=10)
+        ctk.CTkLabel(self.db_sidebar, text="Filtros", font=ctk.CTkFont(size=16, weight="bold")).grid(row=0, column=0, padx=14, pady=(12, 6), sticky="w")
+        ctk.CTkLabel(self.db_sidebar, text="Fecha desde (dd/mm/aaaa)").grid(row=1, column=0, padx=14, pady=(6, 2), sticky="w")
+        ctk.CTkEntry(self.db_sidebar, textvariable=self.db_filters["fecha_desde"]).grid(row=2, column=0, padx=14, pady=(0, 6), sticky="ew")
+        ctk.CTkLabel(self.db_sidebar, text="Fecha hasta (dd/mm/aaaa)").grid(row=3, column=0, padx=14, pady=(6, 2), sticky="w")
+        ctk.CTkEntry(self.db_sidebar, textvariable=self.db_filters["fecha_hasta"]).grid(row=4, column=0, padx=14, pady=(0, 6), sticky="ew")
+        ctk.CTkLabel(self.db_sidebar, text="Servicio").grid(row=5, column=0, padx=14, pady=(10, 2), sticky="w")
+        self.cmb_servicio = ctk.CTkComboBox(self.db_sidebar, values=[], variable=self.db_filters["servicio"])
+        self.cmb_servicio.grid(row=6, column=0, padx=14, pady=(0, 6), sticky="ew")
+        ctk.CTkLabel(self.db_sidebar, text="Malignidad").grid(row=7, column=0, padx=14, pady=(10, 2), sticky="w")
+        self.cmb_malig = ctk.CTkComboBox(self.db_sidebar, values=["", "PRESENTE", "AUSENTE"], variable=self.db_filters["malignidad"])
+        self.cmb_malig.grid(row=8, column=0, padx=14, pady=(0, 6), sticky="ew")
+        ctk.CTkLabel(self.db_sidebar, text="Responsable").grid(row=9, column=0, padx=14, pady=(10, 2), sticky="w")
+        self.cmb_resp = ctk.CTkComboBox(self.db_sidebar, values=[], variable=self.db_filters["responsable"])
+        self.cmb_resp.grid(row=10, column=0, padx=14, pady=(0, 6), sticky="ew")
+        btns = ctk.CTkFrame(self.db_sidebar, fg_color="transparent")
+        btns.grid(row=11, column=0, padx=14, pady=(12, 14), sticky="ew")
+        ctk.CTkButton(btns, text="Refrescar", command=self._refresh_dashboard).pack(side="left", expand=True, fill="x")
+        ctk.CTkButton(btns, text="Limpiar", command=self._clear_filters).pack(side="left", expand=True, fill="x", padx=(8,0))
 
-        self.dashboard_canvas_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        self.dashboard_canvas_frame.grid(row=2, column=0, sticky="nsew")
+        # Área principal con toolbar + pestañas
+        main = ctk.CTkFrame(frame, fg_color="transparent")
+        main.grid(row=0, column=1, sticky="nsew")
+        main.grid_rowconfigure(1, weight=1)
+        main.grid_columnconfigure(0, weight=1)
 
+        toolbar = ctk.CTkFrame(main, fg_color=BG)
+        toolbar.grid(row=0, column=0, sticky="ew", padx=2, pady=(2, 6))
+        self.btn_toggle_sidebar = ctk.CTkButton(toolbar, text="≡ Mostrar filtros", width=140, command=self._toggle_db_sidebar)
+        self.btn_toggle_sidebar.pack(side="left", padx=(6, 8), pady=4)
+        ctk.CTkButton(toolbar, text="Filtros…", width=100, command=self._open_filters_sheet).pack(side="left", padx=(0, 8), pady=4)
+
+        self.tabs = ttk.Notebook(main)
+        self.tabs.grid(row=1, column=0, sticky="nsew")
+
+        self.tab_overview   = ctk.CTkFrame(self.tabs, fg_color="transparent")
+        self.tab_biomarkers = ctk.CTkFrame(self.tabs, fg_color="transparent")
+        self.tab_times      = ctk.CTkFrame(self.tabs, fg_color="transparent")
+        self.tab_quality    = ctk.CTkFrame(self.tabs, fg_color="transparent")
+        self.tab_compare    = ctk.CTkFrame(self.tabs, fg_color="transparent")
+
+        for t in [self.tab_overview, self.tab_biomarkers, self.tab_times, self.tab_quality, self.tab_compare]:
+            t.grid_columnconfigure(0, weight=1)
+            t.grid_columnconfigure(1, weight=1)
+
+        self.tabs.add(self.tab_overview,   text="Overview")
+        self.tabs.add(self.tab_biomarkers, text="Biomarcadores")
+        self.tabs.add(self.tab_times,      text="Tiempos")
+        self.tabs.add(self.tab_quality,    text="Calidad")
+        self.tabs.add(self.tab_compare,    text="Comparador")
+
+        self._dash_canvases = []
+        # Sidebar iniciará colapsado (no grid)
         return frame
+
+
+    # ---------- Helpers Dashboard ----------
+
+    def _clear_filters(self):
+        for k in self.db_filters:
+            self.db_filters[k].set("")
+        self._refresh_dashboard()
+
+    def _refresh_dashboard(self):
+        try:
+            self.set_status("Actualizando dashboard…")
+            self.cargar_dashboard()
+        finally:
+            self.set_status("Dashboard actualizado.")
+
+    def _get_filtered_df(self, df):
+        dff = df.copy()
+        fd = self.db_filters["fecha_desde"].get().strip()
+        fh = self.db_filters["fecha_hasta"].get().strip()
+        if fd:
+            d0 = pd.to_datetime(fd, dayfirst=True, errors="coerce")
+            if pd.notna(d0):
+                dff = dff[dff["_fecha_informe"] >= d0]
+        if fh:
+            d1 = pd.to_datetime(fh, dayfirst=True, errors="coerce")
+            if pd.notna(d1):
+                dff = dff[dff["_fecha_informe"] <= d1]
+
+        srv = self.db_filters["servicio"].get().strip()
+        if srv:
+            dff = dff[dff.get("Servicio", "").astype(str).eq(srv)]
+        mal = self.db_filters["malignidad"].get().strip()
+        if mal:
+            dff = dff[dff.get("Malignidad", "").astype(str).str.upper().eq(mal)]
+        rsp = self.db_filters["responsable"].get().strip()
+        if rsp:
+            dff = dff[dff.get("Usuario finalizacion", "").astype(str).eq(rsp)]
+        return dff
+
+    def _clear_dash_area(self):
+        # Desmonta los canvases previos para liberar memoria
+        for cv in getattr(self, "_dash_canvases", []):
+            try:
+                cv.get_tk_widget().destroy()
+            except Exception:
+                pass
+        self._dash_canvases = []
+
+        # Limpia frames hijos en cada pestaña
+        for tab in [self.tab_overview, self.tab_biomarkers, self.tab_times, self.tab_quality, self.tab_compare]:
+            for child in tab.grid_slaves():
+                child.destroy()
+
+    def _chart_in(self, tab, row, col, render_fn, title, dff):
+        card = ctk.CTkFrame(tab, fg_color=SURFACE, corner_radius=12)
+        card.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+        tab.grid_rowconfigure(row, weight=1)
+
+        header = ctk.CTkFrame(card, fg_color="transparent")
+        header.pack(fill="x", padx=10, pady=(8, 0))
+        ctk.CTkLabel(header, text=title, text_color=TEXT, font=ctk.CTkFont(size=13, weight="bold")).pack(side="left")
+        ctk.CTkButton(header, text="⛶ Pantalla completa", width=150,
+                      command=lambda: self._open_fullscreen_figure(render_fn, title, dff)).pack(side="right")
+
+        try:
+            fig = render_fn()
+            if fig is None:
+                ctk.CTkLabel(card, text="(sin datos)", text_color=MUTED).pack(padx=10, pady=10)
+                return
+            canvas = FigureCanvasTkAgg(fig, master=card)
+            canvas.draw()
+            widget = canvas.get_tk_widget()
+            widget.pack(fill="both", expand=True, padx=8, pady=8)
+            widget.bind("<Double-Button-1>", lambda e: self._open_fullscreen_figure(render_fn, title, dff))
+            self._dash_canvases.append(canvas)
+        except Exception as e:
+            ctk.CTkLabel(card, text=f"Error: {e}", text_color=MUTED).pack(padx=10, pady=10)
+
+    def _toggle_db_sidebar(self):
+        # Muestra/oculta el sidebar, ajusta texto del botón y grid
+        if self.db_sidebar_collapsed:
+            self.db_sidebar.grid(row=0, column=0, sticky="ns", padx=(0, 12), pady=6)
+            self.btn_toggle_sidebar.configure(text="✕ Ocultar filtros")
+        else:
+            self.db_sidebar.grid_forget()
+            self.btn_toggle_sidebar.configure(text="≡ Mostrar filtros")
+        self.db_sidebar_collapsed = not self.db_sidebar_collapsed
+
+    def _open_filters_sheet(self):
+        # Modal de filtros (para no robar ancho)
+        top = ctk.CTkToplevel(self)
+        top.title("Filtros")
+        top.geometry("420x420")
+        top.grab_set()
+        wrap = ctk.CTkFrame(top, fg_color=BG)
+        wrap.pack(fill="both", expand=True, padx=12, pady=12)
+
+        def row(lbl, widget):
+            r = ctk.CTkFrame(wrap, fg_color="transparent"); r.pack(fill="x", pady=6)
+            ctk.CTkLabel(r, text=lbl, width=160, anchor="w").pack(side="left")
+            widget.pack(in_=r, side="left", fill="x", expand=True)
+
+        e1 = ctk.CTkEntry(wrap, textvariable=self.db_filters["fecha_desde"])
+        e2 = ctk.CTkEntry(wrap, textvariable=self.db_filters["fecha_hasta"])
+        cb1 = ctk.CTkComboBox(wrap, values=self.cmb_servicio.cget("values"), variable=self.db_filters["servicio"])
+        cb2 = ctk.CTkComboBox(wrap, values=self.cmb_malig.cget("values"), variable=self.db_filters["malignidad"])
+        cb3 = ctk.CTkComboBox(wrap, values=self.cmb_resp.cget("values"), variable=self.db_filters["responsable"])
+
+        row("Fecha desde (dd/mm/aaaa)", e1)
+        row("Fecha hasta (dd/mm/aaaa)", e2)
+        row("Servicio", cb1)
+        row("Malignidad", cb2)
+        row("Responsable", cb3)
+
+        btns = ctk.CTkFrame(wrap, fg_color="transparent"); btns.pack(fill="x", pady=(10,0))
+        ctk.CTkButton(btns, text="Aplicar", command=lambda:(self._refresh_dashboard(), top.destroy())).pack(side="left", expand=True, fill="x", padx=(0,6))
+        ctk.CTkButton(btns, text="Limpiar", command=self._clear_filters).pack(side="left", expand=True, fill="x", padx=(6,0))
+
+    def _open_fullscreen_figure(self, render_fn, title, dff):
+        # Ventana a pantalla completa con inspector lateral
+        fs = ctk.CTkToplevel(self)
+        fs.title(title)
+        try:
+            fs.state('zoomed')
+        except Exception:
+            pass
+        fs.configure(fg_color=BG)
+        fs.grid_rowconfigure(0, weight=1)
+        fs.grid_columnconfigure(0, weight=1)
+        fs.grid_columnconfigure(1, weight=0)
+
+        # Área de gráfico
+        graph_area = ctk.CTkFrame(fs, fg_color=SURFACE, corner_radius=12)
+        graph_area.grid(row=0, column=0, sticky="nsew", padx=(10,6), pady=10)
+        fig = render_fn()
+        if fig is None:
+            ctk.CTkLabel(graph_area, text="(sin datos)", text_color=MUTED).pack(padx=12, pady=12)
+        else:
+            canv = FigureCanvasTkAgg(fig, master=graph_area)
+            canv.draw()
+            canv.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Inspector lateral
+        insp = ctk.CTkFrame(fs, fg_color=SURFACE, corner_radius=12, width=300)
+        insp.grid(row=0, column=1, sticky="ns", padx=(6,10), pady=10)
+        ctk.CTkLabel(insp, text="Inspector", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", padx=12, pady=(12,6))
+        self._build_inspector(insp, title, dff)
+
+        # Barra superior simple (cerrar)
+        topbar = ctk.CTkFrame(graph_area, fg_color="transparent")
+        topbar.pack(fill="x", padx=10, pady=(10,0))
+        ctk.CTkLabel(topbar, text=title, font=ctk.CTkFont(size=14, weight="bold")).pack(side="left")
+        ctk.CTkButton(topbar, text="Cerrar", width=80, command=fs.destroy).pack(side="right")
+
+    def _build_inspector(self, parent, title, dff):
+        # Datos generales
+        n = len(dff)
+        fmin = pd.to_datetime(dff.get("_fecha_informe"), errors="coerce").min()
+        fmax = pd.to_datetime(dff.get("_fecha_informe"), errors="coerce").max()
+        rng = f"{fmin:%d/%m/%Y} – {fmax:%d/%m/%Y}" if pd.notna(fmin) and pd.notna(fmax) else "—"
+
+        def row(k, v):
+            r = ctk.CTkFrame(parent, fg_color="transparent"); r.pack(fill="x", padx=12, pady=4)
+            ctk.CTkLabel(r, text=k, text_color=MUTED).pack(side="left")
+            ctk.CTkLabel(r, text=v, text_color=TEXT).pack(side="right")
+
+        row("Registros filtrados", f"{n:,}".replace(",", "."))
+        row("Rango de fechas", rng)
+
+        # Secciones condicionales útiles
+        if "Malignidad" in dff.columns:
+            ser = dff["Malignidad"].astype(str).str.upper().value_counts()
+            box = ctk.CTkFrame(parent, fg_color=BG, corner_radius=10); box.pack(fill="x", padx=12, pady=(10,4))
+            ctk.CTkLabel(box, text="Malignidad", font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", padx=10, pady=(8,2))
+            for k,v in ser.items():
+                rowtxt = ctk.CTkFrame(box, fg_color="transparent"); rowtxt.pack(fill="x", padx=10, pady=2)
+                ctk.CTkLabel(rowtxt, text=f"{k}").pack(side="left")
+                ctk.CTkLabel(rowtxt, text=str(v)).pack(side="right")
+
+        if "Organo (1. Muestra enviada a patología)" in dff.columns:
+            top_org = dff["Organo (1. Muestra enviada a patología)"].astype(str).replace({"": "No especificado"}).value_counts().head(8)
+        elif "IHQ_ORGANO" in dff.columns:
+            top_org = dff["IHQ_ORGANO"].astype(str).replace({"": "No especificado"}).value_counts().head(8)
+        else:
+            top_org = None
+
+        if top_org is not None and not top_org.empty:
+            box2 = ctk.CTkFrame(parent, fg_color=BG, corner_radius=10); box2.pack(fill="x", padx=12, pady=(10,12))
+            ctk.CTkLabel(box2, text="Top Órganos", font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", padx=10, pady=(8,2))
+            for k,v in top_org.items():
+                rowtxt = ctk.CTkFrame(box2, fg_color="transparent"); rowtxt.pack(fill="x", padx=10, pady=2)
+                ctk.CTkLabel(rowtxt, text=f"{k}").pack(side="left")
+                ctk.CTkLabel(rowtxt, text=str(v)).pack(side="right")
+
+    # ---------- Renderers: Overview ----------
+
+    def _g_line_informes_por_mes(self, df):
+        if df.empty or df["_fecha_informe"].isna().all():
+            return None
+        ser = df.dropna(subset=["_fecha_informe"]).set_index("_fecha_informe").resample("MS").size()
+        fig = Figure(figsize=(5.6, 3.2), dpi=100)
+        ax = fig.add_subplot(111)
+        ax.plot(ser.index, ser.values, marker="o")
+        ax.set_title("Informes por mes")
+        ax.set_xlabel("Mes")
+        ax.set_ylabel("Conteo")
+        fig.tight_layout()
+        return fig
+
+    def _g_pie_malignidad(self, df):
+        if "Malignidad" not in df.columns or df.empty:
+            return None
+        ser = df["Malignidad"].astype(str).str.upper().replace({"": "DESCONOCIDO"}).value_counts()
+        if ser.empty: return None
+        fig = Figure(figsize=(5.6, 3.2), dpi=100)
+        ax = fig.add_subplot(111)
+        ax.pie(ser.values, labels=ser.index, autopct="%1.1f%%", startangle=90)
+        ax.set_title("Distribución de Malignidad")
+        fig.tight_layout()
+        return fig
+
+    def _g_bar_top_servicio(self, df, top=12):
+        if "Servicio" not in df.columns or df.empty:
+            return None
+        ser = df["Servicio"].astype(str).value_counts().head(top)
+        if ser.empty: return None
+        fig = Figure(figsize=(5.6, 3.2), dpi=100)
+        ax = fig.add_subplot(111)
+        ax.bar(ser.index, ser.values)
+        ax.set_title(f"Top Servicios (n={ser.sum()})")
+        ax.set_ylabel("Informes")
+        ax.tick_params(axis="x", rotation=30, labelsize=8)
+        fig.tight_layout()
+        return fig
+
+    def _g_bar_top_organo(self, df, top=12):
+        # soporta tanto columna Excel como IHQ_ORGANO
+        col = "Organo (1. Muestra enviada a patología)" if "Organo (1. Muestra enviada a patología)" in df.columns else ("IHQ_ORGANO" if "IHQ_ORGANO" in df.columns else None)
+        if not col: return None
+        ser = df[col].astype(str).replace({"": "No especificado"}).value_counts().head(top)
+        if ser.empty: return None
+        fig = Figure(figsize=(5.6, 3.2), dpi=100)
+        ax = fig.add_subplot(111)
+        ax.bar(ser.index, ser.values)
+        ax.set_title("Top Órganos")
+        ax.set_ylabel("Informes")
+        ax.tick_params(axis="x", rotation=30, labelsize=8)
+        fig.tight_layout()
+        return fig
+
+    # ---------- Renderers: Biomarcadores ----------
+
+    def _g_hist_ki67(self, df):
+        col = "IHQ_KI-67" if "IHQ_KI-67" in df.columns else None
+        if not col: return None
+        s = pd.to_numeric(df[col], errors="coerce").dropna()
+        if s.empty: return None
+        fig = Figure(figsize=(5.6, 3.2), dpi=100)
+        ax = fig.add_subplot(111)
+        ax.hist(s.values, bins=12)
+        ax.set_title("Ki-67 (%)")
+        ax.set_xlabel("%")
+        ax.set_ylabel("Frecuencia")
+        fig.tight_layout()
+        return fig
+
+    def _g_bar_her2(self, df):
+        col = "IHQ_HER2" if "IHQ_HER2" in df.columns else None
+        if not col: return None
+        order = ["0", "1+", "2+", "3+", "NEGATIVO", "POSITIVO"]
+        ser = df[col].astype(str).str.upper().value_counts()
+        ser = ser.reindex(order, fill_value=0) if any(k in ser.index for k in order) else ser
+        if ser.sum() == 0: return None
+        fig = Figure(figsize=(5.6, 3.2), dpi=100); ax = fig.add_subplot(111)
+        ax.bar(ser.index, ser.values)
+        ax.set_title("HER2 (score)")
+        ax.set_ylabel("Informes")
+        fig.tight_layout()
+        return fig
+
+    def _g_bar_re_rp(self, df):
+        cols = [c for c in ["IHQ_RECEPTOR_ESTROGENO", "IHQ_RECEPTOR_PROGESTAGENOS"] if c in df.columns]
+        if not cols: return None
+        fig = Figure(figsize=(5.6, 3.2), dpi=100); ax = fig.add_subplot(111)
+        data = []
+        labels = []
+        for c in cols:
+            ser = df[c].astype(str).str.upper().replace({"": "ND"}).value_counts()
+            data.append(ser)
+            labels.append(c.replace("IHQ_", ""))
+        # Normaliza categorías
+        cats = sorted(set().union(*[d.index for d in data]))
+        mat = np.array([[d.get(k, 0) for k in cats] for d in data])
+        for i, row in enumerate(mat):
+            ax.bar(np.arange(len(cats))+i*0.35, row, width=0.35, label=labels[i])
+        ax.set_xticks(np.arange(len(cats))+0.35/2)
+        ax.set_xticklabels(cats, rotation=0)
+        ax.set_title("RE / RP (estado)")
+        ax.legend()
+        fig.tight_layout()
+        return fig
+
+    def _g_bar_pdl1(self, df):
+        # intenta TPS o CPS
+        for col in ["IHQ_PDL-1", "IHQ_PDL1_TPS", "IHQ_PDL1_CPS"]:
+            if col in df.columns:
+                s = df[col].astype(str)
+                break
+        else:
+            return None
+        ser = s.replace({"": "ND"}).value_counts()
+        if ser.empty: return None
+        fig = Figure(figsize=(5.6, 3.2), dpi=100); ax = fig.add_subplot(111)
+        ax.bar(ser.index, ser.values)
+        ax.set_title("PD-L1")
+        ax.set_ylabel("Informes")
+        ax.tick_params(axis="x", rotation=0)
+        fig.tight_layout()
+        return fig
+
+    # ---------- Renderers: Tiempos ----------
+
+    def _g_box_tiempo_proceso(self, df):
+        f_ing = pd.to_datetime(df.get("Fecha de ingreso (2. Fecha de la muestra)", ""), dayfirst=True, errors="coerce")
+        f_inf = pd.to_datetime(df.get("Fecha finalizacion (3. Fecha del informe)", df.get("Fecha de informe", "")), dayfirst=True, errors="coerce")
+        dias = (f_inf - f_ing).dt.days.dropna()
+        if dias.empty: return None
+        fig = Figure(figsize=(5.6, 3.2), dpi=100); ax = fig.add_subplot(111)
+        ax.boxplot(dias.values, vert=True)
+        ax.set_title("Tiempo de proceso (días)")
+        fig.tight_layout()
+        return fig
+
+    def _g_line_throughput_semana(self, df):
+        if df.empty or df["_fecha_informe"].isna().all(): return None
+        ser = df.dropna(subset=["_fecha_informe"]).set_index("_fecha_informe").resample("W-MON").size()
+        fig = Figure(figsize=(5.6, 3.2), dpi=100); ax = fig.add_subplot(111)
+        ax.plot(ser.index, ser.values, marker="o")
+        ax.set_title("Throughput semanal")
+        ax.set_xlabel("Semana")
+        ax.set_ylabel("Informes")
+        fig.tight_layout()
+        return fig
+
+    def _g_scatter_edad_ki67(self, df):
+        if "Edad" not in df.columns: return None
+        x = pd.to_numeric(df["Edad"], errors="coerce")
+        y = pd.to_numeric(df.get("IHQ_KI-67", pd.Series(np.nan, index=df.index)), errors="coerce")
+        m = x.notna() & y.notna()
+        if not m.any(): return None
+        fig = Figure(figsize=(5.6, 3.2), dpi=100); ax = fig.add_subplot(111)
+        ax.scatter(x[m], y[m], alpha=0.6)
+        ax.set_title("Edad vs Ki-67")
+        ax.set_xlabel("Edad")
+        ax.set_ylabel("Ki-67 (%)")
+        fig.tight_layout()
+        return fig
+
+    # ---------- Renderers: Calidad ----------
+
+    def _g_bar_missingness(self, df):
+        cols = [
+            "Servicio", "Malignidad", "Usuario finalizacion",
+            "Organo (1. Muestra enviada a patología)", "IHQ_HER2", "IHQ_KI-67"
+        ]
+        present = [c for c in cols if c in df.columns]
+        if not present: return None
+        miss = df[present].isna().mean().sort_values(ascending=False)
+        fig = Figure(figsize=(5.6, 3.2), dpi=100); ax = fig.add_subplot(111)
+        ax.bar(miss.index, (miss.values*100.0))
+        ax.set_title("Campos vacíos (%)")
+        ax.set_ylabel("% vacío")
+        ax.tick_params(axis="x", rotation=25)
+        fig.tight_layout()
+        return fig
+
+    def _g_bar_top_responsables(self, df, top=10):
+        col = "Usuario finalizacion"
+        if col not in df.columns: return None
+        ser = df[col].astype(str).value_counts().head(top)
+        fig = Figure(figsize=(5.6, 3.2), dpi=100); ax = fig.add_subplot(111)
+        ax.bar(ser.index, ser.values)
+        ax.set_title("Productividad por responsable (Top)")
+        ax.set_ylabel("Informes")
+        ax.tick_params(axis="x", rotation=25)
+        fig.tight_layout()
+        return fig
+
+    def _g_bar_largos_texto(self, df):
+        col = "Descripcion Diagnostico (5,6,7 Tipo histológico, subtipo histológico, margenes tumorales)"
+        if col not in df.columns: return None
+        s = df[col].astype(str).str.len()
+        bins = [0, 50, 150, 300, 600, 1200, np.inf]
+        ser = pd.cut(s, bins=bins, labels=["<50", "50–150", "150–300", "300–600", "600–1200", "1200+"], include_lowest=True).value_counts().sort_index()
+        fig = Figure(figsize=(5.6, 3.2), dpi=100); ax = fig.add_subplot(111)
+        ax.bar(ser.index.astype(str), ser.values)
+        ax.set_title("Longitud del diagnóstico (bins)")
+        ax.set_ylabel("Informes")
+        fig.tight_layout()
+        return fig
+
+    # ---------- Comparador parametrizable ----------
+
+    def _build_comparator(self, tab, df):
+        # Controles
+        ctrl = ctk.CTkFrame(tab, fg_color="transparent")
+        ctrl.grid(row=0, column=0, columnspan=2, padx=10, pady=(10,0), sticky="ew")
+
+        dims = [c for c in ["Servicio", "Usuario finalizacion", "Malignidad", "Organo (1. Muestra enviada a patología)"] if c in df.columns]
+        mets = [c for c in ["IHQ_KI-67"] if c in df.columns]  # se pueden añadir más numéricas
+
+        self._compare_controls["dim"] = ctk.StringVar(value=dims[0] if dims else "")
+        self._compare_controls["agg"] = ctk.StringVar(value="conteo")
+        self._compare_controls["met"] = ctk.StringVar(value=mets[0] if mets else "")
+
+        row = ctk.CTkFrame(ctrl, fg_color=SURFACE, corner_radius=12)
+        row.pack(fill="x", padx=4, pady=4)
+        ctk.CTkLabel(row, text="Dimensión:").pack(side="left", padx=6)
+        ctk.CTkComboBox(row, values=dims or [""], variable=self._compare_controls["dim"]).pack(side="left", padx=6)
+        ctk.CTkLabel(row, text="Agregador:").pack(side="left", padx=6)
+        ctk.CTkComboBox(row, values=["conteo", "promedio"], variable=self._compare_controls["agg"]).pack(side="left", padx=6)
+        ctk.CTkLabel(row, text="Métrica:").pack(side="left", padx=6)
+        ctk.CTkComboBox(row, values=mets or [""], variable=self._compare_controls["met"]).pack(side="left", padx=6)
+        ctk.CTkButton(row, text="Aplicar", command=lambda: self._chart_in(tab, 1, 0, lambda: self._g_compare(df),)).pack(side="left", padx=10)
+
+        # Gráfico inicial
+        self._chart_in(tab, 1, 0, lambda: self._g_compare(df))
+
+    def _g_compare(self, df):
+        dim = self._compare_controls["dim"].get()
+        agg = self._compare_controls["agg"].get()
+        met = self._compare_controls["met"].get()
+        if not dim or df.empty: return None
+
+        fig = Figure(figsize=(11.6, 3.2), dpi=100); ax = fig.add_subplot(111)
+
+        if agg == "conteo":
+            ser = df[dim].astype(str).value_counts()
+            ax.bar(ser.index, ser.values)
+            ax.set_title(f"Conteo por {dim}")
+            ax.tick_params(axis="x", rotation=25)
+        else:
+            if not met or met not in df.columns:
+                return None
+            s = pd.to_numeric(df[met], errors="coerce")
+            grp = df.assign(_metric=s).groupby(dim)["_metric"].mean().dropna()
+            ax.bar(grp.index, grp.values)
+            ax.set_title(f"Promedio de {met} por {dim}")
+            ax.tick_params(axis="x", rotation=25)
+
+        fig.tight_layout()
+        return fig
 
     # =========================
     # Funcionalidad
@@ -502,102 +1010,59 @@ class App(ctk.CTk):
         self.detail_textbox.configure(state="disabled")
 
     def cargar_dashboard(self):
-        for widget in self.kpi_frame.winfo_children():
-            widget.destroy()
-        for widget in self.dashboard_canvas_frame.winfo_children():
-            widget.destroy()
+        # 1) Preparar DF y combos de filtros
+        df = self.master_df.copy()
+        if df is None or df.empty:
+            self._render_kpis(df)
+            self._clear_dash_area()
+            return
 
-        try:
-            df = database_manager.get_all_records_as_dataframe()
-            if df.empty:
-                ctk.CTkLabel(self.dashboard_canvas_frame, text="No hay datos suficientes para generar análisis.").pack(
-                    pady=20
-                )
-                return
+        # Normaliza fechas (varias columnas posibles)
+        df["_fecha_informe"] = pd.to_datetime(
+            df.get("Fecha finalizacion (3. Fecha del informe)", df.get("Fecha de informe", df.get("Fecha de ingreso", ""))),
+            dayfirst=True, errors="coerce"
+        )
 
-            # --- KPIs del dashboard ---
-            kpi_col = 0
-            self._create_kpi_card("Total Informes", f"{len(df)}", kpi_col)
-            kpi_col += 1
+        # Llenar combos dinámicos (servicios / responsables)
+        srv_vals = sorted([s for s in df.get("Servicio", pd.Series(dtype=str)).dropna().astype(str).unique() if s.strip()])
+        rsp_vals = sorted([s for s in df.get("Usuario finalizacion", pd.Series(dtype=str)).dropna().astype(str).unique() if s.strip()])
+        self.cmb_servicio.configure(values=[""] + srv_vals)
+        self.cmb_resp.configure(values=[""] + rsp_vals)
 
-            if "Malignidad" in df.columns and not df["Malignidad"].dropna().empty:
-                tasa_malignidad = df["Malignidad"].astype(str).str.upper().eq("PRESENTE").mean() * 100
-                self._create_kpi_card("Tasa Malignidad", f"{tasa_malignidad:.1f}%", kpi_col)
-                kpi_col += 1
+        # 2) Render de KPIs básicos
+        self._render_kpis(df)
 
-            if "IHQ_KI-67" in df.columns:
-                ki_67_series = pd.to_numeric(df["IHQ_KI-67"].astype(str).str.replace("%", ""), errors="coerce").dropna()
-                if not ki_67_series.empty:
-                    ki67_avg = ki_67_series.mean()
-                    self._create_kpi_card("Ki-67 Promedio", f"{ki67_avg:.1f}%", kpi_col)
-                    kpi_col += 1
+        # 3) Limpiar canvases anteriores y pintar
+        self._clear_dash_area()
 
-            # --- Gráficos ---
-            fig = Figure(figsize=(12, 10), dpi=100)
-            fig.subplots_adjust(hspace=0.6, wspace=0.3)
-            plot_position = 1
+        # Filtros iniciales (los que estén llenos)
+        dff = self._get_filtered_df(df)
 
-            if "IHQ_KI-67" in df.columns:
-                ki_67_series = pd.to_numeric(df["IHQ_KI-67"].astype(str).str.replace("%", ""), errors="coerce").dropna()
-                if not ki_67_series.empty:
-                    ax1 = fig.add_subplot(2, 2, plot_position)
-                    plot_position += 1
-                    import matplotlib.pyplot as plt  # para estilos por defecto
-                    # hist con kde usando seaborn
-                    import seaborn as _sns  # no shadow the global
-                    _sns.histplot(x=ki_67_series, kde=True, ax=ax1)
-                    ax1.set_title("Distribución de Ki-67")
+        # 4) PINTAR: OVERVIEW (4 gráficos)
+        self._chart_in(self.tab_overview, 0, 0, lambda: self._g_line_informes_por_mes(dff), "Informes por mes", dff)
+        self._chart_in(self.tab_overview, 0, 1, lambda: self._g_pie_malignidad(dff), "Distribución de Malignidad", dff)
+        self._chart_in(self.tab_overview, 1, 0, lambda: self._g_bar_top_servicio(dff), "Top Servicios", dff)
+        self._chart_in(self.tab_overview, 1, 1, lambda: self._g_bar_top_organo(dff), "Top Órganos", dff)
 
-            if "IHQ_RECEPTOR_ESTROGENO" in df.columns and "IHQ_RECEPTOR_PROGESTAGENOS" in df.columns:
-                df_re_pr = df[["IHQ_RECEPTOR_ESTROGENO", "IHQ_RECEPTOR_PROGESTAGENOS"]].dropna()
-                if not df_re_pr.empty:
-                    ax2 = fig.add_subplot(2, 2, plot_position)
-                    plot_position += 1
-                    df["RE_Estado"] = df["IHQ_RECEPTOR_ESTROGENO"].astype(str).str.contains("POSITIVO", na=False)
-                    df["PR_Estado"] = df["IHQ_RECEPTOR_PROGESTAGENOS"].astype(str).str.contains("POSITIVO", na=False)
-                    co_ocurrencia = df.groupby(["RE_Estado", "PR_Estado"]).size().unstack(fill_value=0)
-                    all_labels = [False, True]
-                    co_ocurrencia = co_ocurrencia.reindex(index=all_labels, columns=all_labels, fill_value=0)
-                    co_ocurrencia.index = ["RE Negativo", "RE Positivo"]
-                    co_ocurrencia.columns = ["PR Negativo", "PR Positivo"]
-                    co_ocurrencia.plot(kind="bar", stacked=True, ax=ax2)
-                    ax2.set_title("Co-ocurrencia RE y PR")
-                    ax2.tick_params(axis="x", rotation=0)
+        # 5) PINTAR: BIOMARCADORES
+        self._chart_in(self.tab_biomarkers, 0, 0, lambda: self._g_hist_ki67(dff), "Ki-67 (%)", dff)
+        self._chart_in(self.tab_biomarkers, 0, 1, lambda: self._g_bar_her2(dff), "HER2 (score)", dff)
+        self._chart_in(self.tab_biomarkers, 1, 0, lambda: self._g_bar_re_rp(dff), "RE / RP (estado)", dff)
+        self._chart_in(self.tab_biomarkers, 1, 1, lambda: self._g_bar_pdl1(dff), "PD-L1", dff)
 
-            if "Organo (1. Muestra enviada a patología)" in df.columns and not df[
-                "Organo (1. Muestra enviada a patología)"
-            ].dropna().empty:
-                ax3 = fig.add_subplot(2, 2, plot_position)
-                plot_position += 1
-                top_organos = df["Organo (1. Muestra enviada a patología)"].value_counts().nlargest(5)
-                import seaborn as _sns2
-                _sns2.barplot(x=top_organos.index, y=top_organos.values, ax=ax3)
-                ax3.set_title("Top 5 Órganos Analizados")
-                ax3.tick_params(axis="x", rotation=45)
-                for lbl in ax3.get_xticklabels():
-                    lbl.set_horizontalalignment("right")
+        # 6) PINTAR: TIEMPOS
+        self._chart_in(self.tab_times, 0, 0, lambda: self._g_box_tiempo_proceso(dff), "Tiempo de proceso (días)", dff)
+        self._chart_in(self.tab_times, 0, 1, lambda: self._g_line_throughput_semana(dff), "Throughput semanal", dff)
+        self._chart_in(self.tab_times, 1, 0, lambda: self._g_scatter_edad_ki67(dff), "Edad vs Ki-67", dff)
 
-            if "Fecha finalizacion (3. Fecha del informe)" in df.columns:
-                fechas = pd.to_datetime(df["Fecha finalizacion (3. Fecha del informe)"], dayfirst=True, errors="coerce").dropna()
-                if not fechas.empty:
-                    ax4 = fig.add_subplot(2, 2, plot_position)
-                    plot_position += 1
-                    informes_mes = fechas.to_frame(name="fecha").set_index("fecha").resample("M").size()
-                    informes_mes.plot(kind="line", ax=ax4, marker="o")
-                    ax4.set_title("Informes Procesados por Mes")
-                    ax4.set(xlabel="Mes")  # más robusto que set_xlabel aislado
+        # 7) PINTAR: CALIDAD
+        self._chart_in(self.tab_quality, 0, 0, lambda: self._g_bar_missingness(dff), "Campos vacíos (%)", dff)
+        self._chart_in(self.tab_quality, 0, 1, lambda: self._g_bar_top_responsables(dff), "Productividad por responsable", dff)
+        self._chart_in(self.tab_quality, 1, 0, lambda: self._g_bar_largos_texto(dff), "Longitud del diagnóstico", dff)
 
-            if plot_position > 1:
-                canvas = FigureCanvasTkAgg(fig, master=self.dashboard_canvas_frame)
-                canvas.draw()
-                canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
-            else:
-                ctk.CTkLabel(
-                    self.dashboard_canvas_frame, text="No hay suficientes datos válidos para generar gráficos."
-                ).pack(pady=20)
+        # 8) PINTAR: COMPARADOR
+        self._build_comparator(self.tab_compare, dff)
 
-        except Exception as e:
-            messagebox.showerror("Error de Dashboard", f"No se pudo generar el dashboard: {e}")
 
     def _create_kpi_card(self, title, value, col):
         self.kpi_frame.grid_columnconfigure(col, weight=1)

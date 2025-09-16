@@ -61,7 +61,9 @@ PATTERNS_HUV = {
     'fecha_autopsia': r'Fecha y hora de la autopsia:\s*(\d{2}/\d{2}/\d{4})',
 
     # Información específica de estudios
-    'organo': r'Organo\s*:\s*([A-ZÁÉÍÓÚÑ\s\+\(\)]+)',
+    'organo': (r'(?is)(?:^|\n)\s*Ó?rgano(?:s)?(?:\s*\(1\.\s*Muestra enviada a patología\))?'
+              r'\s*[:\-]?\s*([A-ZÁÉÍÓÚÑa-záéíóúñ0-9/ .,+\-]+?)'
+              r'(?=(?:\s{2,}[A-ZÁÉÍÓÚÑ]{2,}|\n(?:Tipo de examen|Tipo de estudio|CUPS|Tarifa|Valor|Copago|Descuento|Fecha|Procedimiento|Servicio)\b|\n\n|$))'),
     'fecha_toma': r'Fecha toma\s*:\s*(\d{4}-\d{2}-\d{2})',
     'certificado_defuncion': r'No\.\s*Certificado\s*de\s*defunción\s*([0-9]+)',
 

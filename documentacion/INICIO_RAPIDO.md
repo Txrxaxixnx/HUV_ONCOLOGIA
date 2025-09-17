@@ -1,8 +1,8 @@
-Guía de Inicio Rápido – EVARISIS Gestor H.U.V
+Guia de Inicio Rapido - EVARISIS Gestor H.U.V (v2.5)
 
-Proyecto institucional del Hospital Universitario del Valle (HUV), desarrollado por el Área de Innovación y Desarrollo y liderado clínicamente por el Dr. Juan Camilo Bayona (Oncología).
+Proyecto institucional del Hospital Universitario del Valle, liderado por Oncologia y desarrollado por el Area de Innovacion y Desarrollo.
 
-Instalación Express (5 minutos)
+Instalacion express (menos de 10 minutos)
 - Windows
 ```cmd
 pip install -r requirements.txt
@@ -22,40 +22,39 @@ pip install -r requirements.txt
 python huv_ocr_sistema_definitivo.py
 ```
 
-Uso en 3 pasos
-1) Agregar PDFs: “Agregar Archivos” o “Agregar Carpeta”.
-2) Elegir destino: “Seleccionar Carpeta de Salida”.
-3) Procesar: “Procesar PDFs”.
+Primera ejecucion
+1) Verifique que Tesseract este accesible (config.ini o PATH).
+2) Ejecute `python huv_ocr_sistema_definitivo.py`.
+3) El sistema instalara automaticamente ChromeDriver (requiere internet la primera vez).
 
-Análisis Avanzado IHQ (v1.1)
-- Botón: “Analizar Biomarcadores IHQ (v1.1)”.
-- Selecciona uno o varios PDFs de IHQ y una carpeta de salida.
-- Se genera un Excel separado con biomarcadores (HER2, Ki‑67, RE/ER, RP/PR, PD‑L1, P16 y Estudios Solicitados) sin afectar el esquema estándar.
+Uso en 4 pasos
+1) Procesar PDFs: seleccione archivo(s) IHQ, observe el log y espere el mensaje de registros guardados.
+2) La aplicacion extrae biomarcadores, normaliza datos y guarda el resultado en `huv_oncologia.db`.
+3) Visualizar datos: abra la pestaña correspondiente, use el buscador o seleccione una fila para ver detalles.
+4) Dashboard Analitico: ajuste filtros, explore graficos y abra modo pantalla completa con doble clic.
 
-Procesadores especializados (opcional)
+Automatizar BD Web
+- Abra la vista Automatizar BD Web.
+- Ingrese usuario, clave y rango de fechas (boton Elegir abre el calendario inteligente).
+- El bot Selenium recorre el portal `huvpatologia.qhorte.com`, establece el criterio y ejecuta la consulta.
+
+Verificacion rapida
 ```bash
-python procesador_autopsia.py
-python procesador_ihq.py
-python procesador_biopsia.py
-python procesador_revision.py
-```
-
-Verificación rápida
-```bash
-python test_sistema.py
+tesseract --version
+python -c 'import pytesseract, fitz, pandas, customtkinter, selenium'
 ```
 
 Problemas comunes
-| Problema               | Solución                                                          |
-|---                     |---                                                                |
-| Tesseract not found    | Instalar Tesseract y agregar al PATH o configurar en `config.ini` |
-| No module named …      | `pip install -r requirements.txt`                                 |
-| Resultados imprecisos  | Aumentar `DPI`; revisar calidad del PDF                           |
-| Lento con PDFs grandes | Procesar por lotes pequeños; cerrar otras apps                    |
+- Tesseract not found: ajuste `config.ini` o agregue la ruta al PATH.
+- Error Selenium/Chrome: actualice Google Chrome y reintente; el driver se vuelve a descargar.
+- OCR pobre: aumente `OCR_SETTINGS.DPI` o mejore el PDF de origen.
+- Registro duplicado: revise si el PDF reutiliza el mismo numero de peticion.
 
-Rendimiento esperado
-- 1 PDF (2 páginas): ~30 s
-- 10 PDFs: ~5 min
-- Precisión: 85–95% (según calidad del documento)
+Atajos utiles
+- F5 en Visualizar datos ejecuta la opcion Actualizar.
+- Doble clic sobre un grafico abre modo pantalla completa.
+- El switch Modo Claro alterna la paleta de la UI en vivo.
 
-Más detalles técnicos: `analisis/README.md`
+Mas detalles
+- Documentacion completa: `documentacion/README.md`.
+- Analisis por modulo: `documentacion/analisis/README.md`.

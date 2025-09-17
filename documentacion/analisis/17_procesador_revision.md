@@ -1,40 +1,23 @@
-# Análisis: `procesador_revision.py`
+# Analisis: `procesador_revision.py` (estado v2.5)
 
-## Rol
-- Procesador especializado para informes de Revisión de Casos Externos (R). Funciona de forma independiente.
+## Situacion actual
+- Se conserva en `LEGACY/` generando Excel; no se ha migrado a la base SQLite.
+- Responsable de capturar informacion de revisiones de lamina/segunda opinion.
 
-## Patrones y reglas
-- `PATTERNS_REVISION` (versión corregida):
-  - `descripcion_macroscopica_rev`: bloque desde “Se recibe orden para revisión…” hasta la sección microscópica.
-  - `descripcion_microscopica_rev`: bloque microscópico hasta “DIAGNÓSTICO”.
-  - `diagnostico_rev`: bloque diagnóstico hasta “COMENTARIOS”.
-  - `comentarios_rev`: comentarios hasta firma/aval.
-  - `organo_rev`: bloque “Bloques y láminas …” hasta el encabezado siguiente (se limpia “material de rutina”).
-  - `responsable_final`: captura explícita “NANCY MEJIA VARGAS” (evita IndexError).
-  - `medico_tratante_rev`: extrae médico tratante robustamente (con dos puntos/guiones/espacios).
+## Elementos clave en legacy
+- Comparacion entre diagnostico original y revision.
+- Identificacion de responsable, fechas de revision, comentarios adicionales.
 
-## Extracción principal
-- `extract_revision_data(text)`:
-  - Usa `BASE_PATTERNS` (= `PATTERNS_HUV`) y luego aplica `PATTERNS_REVISION`.
-  - Prioriza `medico_tratante_rev` si está presente.
-  - Normaliza nombre, identificación, edad y fechas.
-  - Reglas:
-    - `hospitalizado = SI`.
-    - `especialidad_deducida = HEMATOONCOLOGIA ADULTO` (heurística fija).
-    - `malignidad` desde `diagnostico_rev`.
-    - `usuario_finalizacion_final = 'NANCY MEJIA VARGAS'` si se reconoce la firma.
-    - `organo_final` limpiando saltos de línea y textos auxiliares.
+## Plan de migracion
+1. Definir campos minimos para revision dentro de la base (diagnostico original, revisado, motivo, responsable).
+2. Adaptar regex y normalizaciones para alimentar SQLite usando `database_manager`.
+3. Extender el dashboard con indicadores de concordancia y motivos de revision.
 
-## Mapeo a Excel
-- `map_to_excel_format(extracted_data) -> list[dict]`:
-  - Genera una fila con las 55 columnas.
-  - Completa Sede/Departamento/Municipio/Tarifa/Valor desde `HUV_CONFIG`.
-  - Fija “Ubicación” a “OBSERVACION CONS URGENCIAS” e “Identificador Unico” en el ejemplo de plantilla.
+## Riesgos
+- Diferencias de formato entre revisiones antiguas y recientes.
+- Necesidad de anonimizar datos sensibles (comentarios libres).
 
-## Entrada/Salida
-- Entrada: PDF seleccionado mediante diálogo.
-- Salida: `Informe_Revision_<timestamp>.xlsx` en la carpeta del PDF.
-
-## Observaciones
-- Consolidar cómo se alimentan “Ubicación” e “Identificador Unico” para generalizar a más plantillas.
-- Ajustar `deduce_specialty_revision` si se amplían servicios/centros de origen.
+## Recomendaciones
+- Crear pruebas con casos reales anonimizados que incluyan discrepancias y confirmaciones.
+- Coordinar con patologia para definir niveles de severidad/accion a incluir en los reportes.
+- Planear capacitacion al equipo sobre nuevos filtros de concordancia una vez se integre al dashboard.

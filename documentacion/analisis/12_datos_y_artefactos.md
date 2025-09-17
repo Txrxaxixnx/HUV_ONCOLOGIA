@@ -1,24 +1,25 @@
-Datos y Artefactos del Ecosistema
+Datos y Artefactos del Ecosistema (v2.5)
 
-Activos Clave
-- Esquema operativo (55 columnas): formato actual de salida del EVARISIS Gestor H.U.V validado para operación inicial.
-- Esquema Maestro H.U.V (167 columnas): referencia exhaustiva institucional que guía el enriquecimiento futuro del esquema operativo.
+Activos clave
+- Base operativa SQLite: `huv_oncologia.db` (tabla `informes_ihq`).
+- Esquema maestro HUV (167 campos) como referencia para futuras ampliaciones.
+- Plantillas legacy (Excel 55 columnas) disponibles solo para comparacion en `LEGACY/`.
 
-Fuente Primaria de Informes (PDFs)
-- Portal de Patología H.U.V: `https://huvpatologia.qhorte.com/index.php`
-  - Nota de acceso: aplicación de red local; solo intranet HUV (similar a SERVINTE). El proyecto cuenta con credenciales institucionales.
+Fuentes primarias
+- Portal de Patologia H.U.V: `https://huvpatologia.qhorte.com/index.php` (intranet).
+- Descargas automatizadas via `huv_web_automation.py` (Selenium).
 
-Fuentes de Conocimiento Científico (para futura IA)
-- CAP: `https://www.cap.org/protocols-and-guidelines/cancer-reporting-tools/cancer-protocol-templates`
-- Pathology Outlines: `https://www.pathologyoutlines.com/`
-- OMS (Libros Azules): `https://tumourclassification.iarc.who.int/home`
+Fuentes de conocimiento
+- CAP, Pathology Outlines, OMS (Libros Azules) para estandarizar nomenclaturas.
 
-Carpetas y Archivos del Repositorio
-- `EXCEL/`: artefactos de exportaciones (Excel) y salidas de depuración del OCR.
-- `pdfs_patologia/`: PDFs de ejemplo/entrada.
-- `spa.traineddata`: datos de idioma español para Tesseract (si se distribuye con el proyecto, documentar la ruta efectiva del binario Tesseract).
-- Dependencias de terceros (ej. Poppler): no forman parte del código del sistema.
+Carpetas y archivos relevantes
+- `documentacion/`: guias, informes y comunicados.
+- `LEGACY/`: version 1.x del pipeline (Excel).
+- `pdfs_patologia/`: ejemplos de entrada (asegurar anonimizacion).
+- `EXCEL/`: artefactos de exportaciones historicas (mantener solo como fixtures).
+- `spa.traineddata`: datos de idioma para Tesseract (verificar ruta real instalada).
 
-Buenas Prácticas
-- No versionar salidas (Excel/PDF procesado) salvo como fixtures de prueba.
-- Mantener datos de ejemplo en carpetas dedicadas con anonimización cuando aplique.
+Buenas practicas
+- Evitar versionar nuevos excels generados; usar exportaciones bajo demanda o adjuntar como evidencia en carpetas temporales.
+- Realizar respaldos periodicos de `huv_oncologia.db` antes de pruebas masivas.
+- Documentar origen y fecha de los PDFs utilizados para entrenamiento o validacion.

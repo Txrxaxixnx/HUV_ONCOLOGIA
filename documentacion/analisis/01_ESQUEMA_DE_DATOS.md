@@ -1,5 +1,11 @@
 01 – Esquema de Datos del Proyecto
 
+Actualizacion v2.5
+- El esquema operativo de 55 columnas se mantiene como base historica y ahora se persiste en SQLite (`huv_oncologia.db`).
+- La version 2.5 agrega columnas derivadas `IHQ_*` (HER2, Ki-67, RE, RP, PD-L1, P16, Estudios Solicitados) almacenadas junto a las 55 columnas originales.
+- Este documento conserva la referencia detallada del esquema legacy y orienta la convergencia con el Esquema Maestro H.U.V.
+
+
 Introducción
 - Este documento es la referencia central del esquema de datos manejado por EVARISIS Gestor H.U.V. Aquí se describe el Esquema Operativo actual (55 columnas) validado en v1.0, la relación con el Esquema Maestro institucional del H.U.V, y el mapa de expansión para los nuevos campos de IHQ planificados en la Fase 2 del roadmap.
 

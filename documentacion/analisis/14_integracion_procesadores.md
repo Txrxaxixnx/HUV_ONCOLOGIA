@@ -1,46 +1,25 @@
-# Plan de Integración de Procesadores al Flujo Principal
+# Analisis: Integracion de procesadores
 
-## Objetivo
-Integrar los procesadores especializados (IHQ, Biopsia, Revisión) al pipeline principal sin romper compatibilidad con la app actual.
+## Estado actual
+- IHQ esta integrado al flujo moderno (SQLite + dashboard).
+- Biopsia, Autopsia y Revision operan solo en la ruta legacy (Excel).
 
-## Estrategia
-- Enrutar por tipo detectado y delegar la extracción al procesador cuando exista uno especializado.
-- Mantener `data_extraction.map_to_excel_format` como mapeador por defecto; permitir que cada procesador use su propio mapeo si genera múltiples filas (p.ej., Biopsia).
-- Habilitar/inhabilitar la integración vía bandera de configuración para despliegues controlados.
+## Estrategia de integracion
+1. Revisar patrones y campos obligatorios de cada procesador legacy.
+2. Crear adaptadores que transformen la salida legacy a diccionarios compatibles con `database_manager.save_records`.
+3. Extender la tabla SQLite con columnas especificas (manteniendo la compatibilidad con informes IHQ).
+4. Actualizar la UI para permitir filtros por tipo de informe y graficos adicionales.
 
-## Cambios propuestos (mínimos y seguros)
-- `data_extraction.py`:
-  - Añadir funciones de puente (import lazy/try-except) hacia `procesador_ihq`, `procesador_biopsia`, `procesador_revision`.
-  - Nueva función `extract_data_router(text)`: usa `detect_report_type(text)` y:
-    - Si tipo == IHQ y módulo disponible: `procesador_ihq.extract_ihq_data(text)`.
-    - Si tipo == BIOPSIA: `procesador_biopsia.extract_biopsy_data(text)` + `procesador_biopsia.extract_specimens_data(text, num)` para construir filas.
-    - Si tipo == REVISION: `procesador_revision.extract_revision_data(text)`.
-    - En caso contrario: `extract_huv_data(text)` (actual).
-  - Para el mapeo:
-    - IHQ/REVISION: usar `procesador_ihq.map_to_excel_format(data)` / `procesador_revision.map_to_excel_format(data)`.
-    - BIOPSIA: usar `procesador_biopsia.map_to_excel_format(common_data, specimens)`.
-    - Fallback: `map_to_excel_format(extracted_data, filename)` actual.
-- `ui.py`:
-  - Cambiar llamada de `extract_huv_data` a `extract_data_router` y adaptar mapeo según retorno.
-  - Mantener logs y artefacto de depuración sin cambios.
+## Dependencias
+- `procesador_ihq_biomarcadores` ya reusa logica de `procesador_ihq`; se espera seguir la misma linea con Biopsia/Autopsia/Revision.
+- Se requiere actualizar `huv_constants.py` cuando se agreguen nuevos codigos o patrones.
 
-## Bandera de activación
-- Añadir en `config.ini` (sección `[PROCESSORS]`): `ENABLE_PROCESSORS = true|false`.
-- Si `false`, usar siempre `extract_huv_data` + `map_to_excel_format` actual.
+## Consideraciones
+- La base actual contiene columnas específicas de IHQ; se debe evaluar normalizar campos comunes o crear tablas adicionales.
+- Garantizar que la insercion en SQLite siga el mismo control de duplicados (numero de peticion).
+- Actualizar pruebas y dashboard para reflejar nuevos tipos de informe.
 
-## Orden de trabajo sugerido
-1) Limpieza de imports y consolidación de esquema de datos (hecho: eliminación de imports obsoletos en `data_extraction.py`).
-2) Implementar `extract_data_router` con `try/except ImportError` para no romper en entornos mínimos.
-3) Ajustar `ui.py` a la nueva ruta de extracción y mapeo sin cambiar la UI.
-4) Validar con PDFs de ejemplo (IHQ, Biopsia múltiple, Revisión).
-5) Documentar comportamiento y actualizar `INICIO_RAPIDO.md`.
-
-## Riesgos y mitigaciones
-- Diferencias en claves del diccionario entre módulos: documentar el contrato mínimo de campos; agregar rellenos por defecto.
-- Variaciones de plantillas: mantener pruebas con textos representativos y revisar patrones al incorporar nuevas fuentes.
-- Codificación: asegurar UTF-8 y sanitización de caracteres previos al mapeo.
-
-## Futuro
-- Extraer `PATTERNS_BASE` común y unificar utilidades compartidas (split de nombre, fechas, normalizaciones) en un módulo `common_extraction.py`.
-- Añadir tests unitarios por procesador y pruebas de regresión para patrones críticos.
-
+## Proximos pasos sugeridos
+- Diseñar un mapeo maestro que indique para cada tipo de informe que columnas se poblan.
+- Implementar pruebas cruzadas (legacy vs nuevo pipeline) antes de habilitar la vista en produccion.
+- Coordinar con BI/Power BI para asegurar que los cambios de esquema se reflejen en los reportes.

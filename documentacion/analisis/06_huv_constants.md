@@ -1,21 +1,27 @@
 # Analisis: `huv_constants.py`
 
 ## Rol
-- Provee constantes y tablas de referencia compartidas para todo el sistema.
+- Provee constantes y patrones compartidos para el ecosistema EVARISIS (v2.5).
+- Alimenta tanto el pipeline moderno (`procesador_ihq_biomarcadores`) como los procesadores legacy.
 
 ## Contenido
-- `HUV_CONFIG`: Valores por defecto (sede, municipio, tipo documento, tarifas).
-- `CUPS_CODES`: Mapeo tipo de informe -> codigo CUPS.
-- `PROCEDIMIENTOS`: Descripcion extendida por codigo CUPS.
-- `ESPECIALIDADES_SERVICIOS`: Heuristicas para deducir especialidad a partir de palabras clave de servicio.
-- `PATTERNS_HUV`: Regex oficiales/robustas para capturar campos desde el texto de los informes.
-- `MALIGNIDAD_KEYWORDS`: Palabras clave para clasificar malignidad.
+- `HUV_CONFIG`: valores por defecto (sede, municipio, tipo documento, tarifas).
+- `CUPS_CODES` y `PROCEDIMIENTOS`: mapeo de tipo de estudio a codigos CUPS y descripciones.
+- `ESPECIALIDADES_SERVICIOS`: heuristicas para deducir especialidad desde el servicio reportado.
+- `PATTERNS_HUV`: regex robustas para extraer datos comunales (identificacion, fechas, descripciones).
+- `MALIGNIDAD_KEYWORDS`: lista de terminos para detectar malignidad en diagnosticos.
 
 ## Interaccion
-- Importado por `data_extraction.py` para toda la logica de extraccion.
-- En los prototipos de `processors/` se hace referencia a una futura `PATTERNS_BASE` (base común). Por ahora, esa base práctica es `PATTERNS_HUV` y la migración se realizará cuando la modularización esté consolidada.
+- `procesador_ihq.py` y `procesador_ihq_biomarcadores.py` reutilizan `PATTERNS_HUV` como base antes de aplicar reglas especificas.
+- Procesadores legacy (Biopsia, Autopsia, Revision) dependen de estas constantes; al migrarlos a SQLite se planea reusar el mismo modulo.
+- Modulos auxiliares (instalacion, tests) pueden consultar `HUV_CONFIG` para valores por defecto.
 
-## Sugerencias
-- Consolidar pruebas de regresion cuando se modifique `PATTERNS_HUV`.
-- Centralizar normalizaciones de mayusculas/acento si se anaden mas tablas.
-- Planificar refactor hacia `PATTERNS_BASE` para compartir lo común entre tipos de informe y permitir sobreescrituras por procesador.
+## Consideraciones
+- Cualquier cambio en `PATTERNS_HUV` debe probarse contra PDFs representativos (IHQ minimo).
+- Agregar comentarios breves en el codigo cuando se introduzca un nuevo patron para facilitar auditoria clinica.
+- Mantener sincronizada la lista de CUPS/procedimientos con la direccion de patologia.
+
+## Acciones futuras
+- Extraer subconjuntos de patrones comunes para facilitar migracion de Biopsia/Autopsia/Revision.
+- Evaluar cargar constantes desde archivos YAML/JSON si la cantidad de mapeos crece.
+- Crear pruebas unitarias que verifiquen coincidencias clave (identificador, fechas, organos) frente a textos de ejemplo.

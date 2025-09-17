@@ -1,37 +1,36 @@
 # Analisis: `ocr_processing.py`
 
 ## Rol
-- Convertir paginas de PDF a imagenes y aplicar OCR optimizado con Tesseract para obtener texto.
+- Convertir paginas de PDF a texto usando estrategia hibrida: primero se intenta texto nativo de PyMuPDF y se recurre a Tesseract cuando es necesario.
 
-## Parametros clave (desde `config.ini`)
-- `OCR_SETTINGS.DPI`: Resolucion de render (recomendado 300-400).
-- `OCR_SETTINGS.PSM_MODE`: Page Segmentation Mode de Tesseract (por defecto 6: bloque de texto uniforme).
-- `OCR_SETTINGS.LANGUAGE`: Idioma del OCR (ej. `spa`).
-- `OCR_SETTINGS.OCR_CONFIG`: Parametros adicionales para Tesseract.
-- `PROCESSING.FIRST_PAGE` / `LAST_PAGE`: Rango de paginas a procesar.
-- `PROCESSING.MIN_WIDTH`: Reescalado minimo antes del OCR (mejora legibilidad).
+## Parametros clave (`config.ini`)
+- `OCR_SETTINGS.DPI`: resolucion de render (300-400 recomendado).
+- `OCR_SETTINGS.PSM_MODE`: modo de segmentacion de pagina predeterminado.
+- `OCR_SETTINGS.LANGUAGE`: idiomas para Tesseract (por defecto `spa`).
+- `OCR_SETTINGS.OCR_CONFIG`: banderas adicionales para Tesseract (sin `--psm` duplicados).
+- `PROCESSING.FIRST_PAGE` / `LAST_PAGE`: rango de paginas a procesar.
+- `PROCESSING.MIN_WIDTH`: ancho minimo; las imagenes se escalan si son menores.
 
 ## Funcion principal
 ### `pdf_to_text_enhanced(pdf_path: str) -> str`
-- Abre el documento con `fitz` (PyMuPDF).
-- Por pagina:
-  - Renderiza con `Matrix(DPI/72, DPI/72)` para obtener un pixmap.
-  - Convierte a `PIL.Image` (PPM) y a escala de grises (`L`).
-  - Reescala si el ancho es menor que `MIN_WIDTH`.
-  - Aplica `pytesseract.image_to_string` con `lang` y `config` derivados de INI.
-  - Concatena el texto con separadores de pagina.
-- Maneja excepciones agregando contexto del PDF en el mensaje.
+1. Abre el documento con `fitz`.
+2. Calcula el rango de paginas usando FIRST_PAGE/LAST_PAGE.
+3. Intenta `page.get_text('text')`; si detecta tokens IHQ o suficiencia de texto, usa la salida nativa.
+4. Si no, renderiza la pagina con el DPI configurado, convierte a escala de grises y escala segun `MIN_WIDTH`.
+5. Ejecuta Tesseract variando PSM (valor configurado, 6 y 4) hasta obtener texto util.
+6. `_post_ocr_cleanup` normaliza patrones clave (IHQ######, N. peticion, espacios multiples).
+7. Concatena el texto con separadores `--- PAGINA X ---` y devuelve el resultado.
 
 ## Conexiones
-- Lee `config.ini` para ubicar `tesseract` y parametros OCR.
-- Consumido por `ui.HUVOCRSystem._process_files()`.
+- Consumido por `procesador_ihq_biomarcadores` y por los procesadores legacy cuando se ejecutan de forma independiente.
+- Lee `config.ini` para localizar Tesseract segun sistema operativo.
 
 ## Consideraciones
-- PDF vectorial con texto real: podria evaluarse extraer texto directo (PyMuPDF `get_text`) antes de OCR para rendimiento/calidad.
-- Calidad OCR depende del render: filtros de binarizacion/contraste pueden mejorar resultados para scans complejos.
-- `LANGUAGE=spa` requiere datos de idioma instalados (p. ej., `spa.traineddata`).
+- El fallback de PSM cubre layouts frecuentes; nuevos templates pueden requerir valores adicionales.
+- `_post_ocr_cleanup` es critico para segmentar informes multiples en un mismo PDF.
+- El modulo no exporta texto crudo; se puede agregar una bandera para debug.
 
 ## Mejoras sugeridas
-- Deteccion heuristica de "texto embebido" para saltar OCR si no hace falta.
-- Preprocesamiento adicional opcional (umbralizacion, despeckle, desenfoque suave para contraste).
-- Metricas por pagina (tiempo/longitud texto) para diagnostico de calidad.
+- Detectar automaticamente PDF vectorial para omitir OCR y mejorar rendimiento.
+- Exponer tiempo de procesamiento por pagina como metrica de diagnostico.
+- Permitir configuracion de idiomas alternos (ej. spa+eng) desde `config.ini`.

@@ -1,44 +1,24 @@
-# Análisis: `procesador_biopsia.py`
+# Analisis: `procesador_biopsia.py` (estado v2.5)
 
-## Rol
-- Procesador especializado para informes de Biopsia con múltiples especímenes (A., B., C.).
-- Extrae datos comunes, identifica y divide bloques por espécimen, y genera una fila por cada uno.
+## Situacion actual
+- Se mantiene en `LEGACY/` con salida Excel (55 columnas).
+- Aun no se integra al pipeline SQLite ni al dashboard.
 
-## Patrones y reglas
-- `PATTERNS_BIOPSIA`:
-  - `descripcion_macroscopica_full`: bloque entre “DESCRIPCIÓN MACROSCÓPICA” y sección microscópica.
-  - `descripcion_microscopica_full`: bloque entre sección microscópica y “DIAGNÓSTICO”.
-  - `diagnostico_full`: diagnóstico hasta firma/responsable.
-  - `responsable_analisis`: nombre sobre el rótulo “Responsable del análisis”.
-- `MALIGNIDAD_KEYWORDS_BIOPSIA`: lista extendida para identificar malignidad.
+## Responsabilidades en legacy
+- Extraer campos clinicos de informes de biopsia (organos, margenes, diagnostico).
+- Utiliza `huv_constants` y regex especificas para corrientes de texto.
 
-## Lógica de especímenes
-- `extract_specimens_data(text, numero_peticion) -> list`:
-  - Detecta letras de especímenes en el bloque macroscópico.
-  - Divide diagnóstico y microscópico por letra usando anclajes “^A.”, “^B.”, etc. (modo multilinea).
-  - Construye para cada espécimen: `numero_muestra` (p.ej., M1234567-A), órgano, diagnóstico/micro específicos.
+## Plan de migracion
+1. Reutilizar helpers comunes (normalizacion, identificacion) para generar un diccionario compatible con SQLite.
+2. Ampliar el esquema de `huv_oncologia.db` o crear tablas relacionadas para campos exclusivos de biopsia.
+3. Agregar visualizaciones especificas (ej. distribucion por organo, margenes positivos).
+4. Implementar pruebas comparativas con la version legacy antes de activar en la UI.
 
-## Extracción principal
-- `extract_biopsy_data(text)`:
-  - Aplica `BASE_PATTERNS` (= `PATTERNS_HUV`) para campos comunes.
-  - Usa `PATTERNS_BIOPSIA` para macro/micro/diagnóstico y responsable.
-  - Normaliza nombre, identificación, edad y fechas.
-  - Reglas:
-    - `hospitalizado = SI`.
-    - `especialidad_deducida` por servicio (`deduce_specialty_biopsia`).
-    - `malignidad` desde `diagnostico_full`.
-    - `identificador_unico_final` desde “Seguimos Haciendo Historia <número>”.
+## Riesgos
+- Cambios en plantillas de biopsia pueden requerir nuevas regex.
+- Faltan datasets anonimizados representativos para pruebas automatizadas.
 
-## Mapeo a Excel
-- `map_to_excel_format(common_data, specimens_data) -> list[dict]`:
-  - Carga datos comunes y luego sobreescribe campos por espécimen.
-  - Rellena `CUPS` y `Procedimiento` para “BIOPSIA”.
-  - Genera tantas filas como especímenes detectados (55 columnas cada una).
-
-## Entrada/Salida
-- Entrada: PDF seleccionado mediante diálogo.
-- Salida: `Informe_Biopsia_<timestamp>.xlsx` en la carpeta del PDF.
-
-## Observaciones
-- El campo “Fecha ordenamiento” está fijo en el ejemplo; se sugiere calcularlo desde `fecha_ingreso` o extraerlo de encabezado.
-- Recomendado fortalecer el patrón de división de especímenes para comillas/tipografías variables.
+## Recomendaciones
+- Construir set de fixtures anonimizados que cubran escenarios tipicos (con/ sin margenes, organos multiples).
+- Definir columnas minimas para integracion (fecha, servicio, responsable, organo, margenes, diagnostico).
+- Coordinar con el area clinica para priorizar biomarcadores o indicadores especificos de biopsia.

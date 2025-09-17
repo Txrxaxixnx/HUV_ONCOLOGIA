@@ -1,78 +1,69 @@
 EVARISIS Gestor H.U.V: Informe Global del Proyecto
 
-Versión del software: v1.1 (10/09/2025)
-Fecha de esta actualización documental: 10/09/2025
+Version del software: v2.5 (15/09/2025)
+Fecha de esta actualizacion documental: 15/09/2025
 
-Resumen Ejecutivo
-- EVARISIS Gestor H.U.V es la plataforma institucional para estructurar y analizar datos clínicos verídicos provenientes de informes de patología, fortaleciendo la toma de decisiones, la investigación y la gestión de recursos del HUV.
-- La versión actual (v1.1) automatiza la extracción desde PDFs, normaliza la información y la entrega en un esquema operativo validado de 55 columnas. Incluye procesadores especializados (Autopsia, IHQ, Biopsia, Revisión) y agrega un análisis avanzado de IHQ mediante un botón en la interfaz que genera un Excel separado con biomarcadores (HER2, Ki‑67, RE/ER, RP/PR, PD‑L1, P16 y Estudios Solicitados).
+Resumen ejecutivo
+- EVARISIS Gestor H.U.V consolida un pipeline de captura, analisis y persistencia de informes de patologia para oncologia HUV.
+- La version 2.5 incorpora una interfaz moderna, pipeline persistente en SQLite y un dashboard analitico integrado para decision clinica e investigacion.
+- La automatizacion del portal institucional reduce tareas manuales de descarga y garantiza alimentacion oportuna de la base de datos.
 
-Visión Estratégica
-- Misión: Transformar informes de patología del HUV en un activo de datos centralizado para decisiones clínicas, investigación y gestión.
-- Objetivos estratégicos:
-  - Inteligencia de negocio hospitalaria (Power BI).
-  - Investigación clínica y epidemiológica (énfasis en IHQ y moleculares).
-  - Optimización de recursos (análisis predictivo para convenios/farmacéuticas).
-  - Automatización de procesos (desde OCR hasta integración con SERVINTE).
-  - Soporte a decisiones clínicas (bases para IA futura).
+Vision estrategica
+- Mision: transformar informes de patologia en informacion estructurada confiable para la gestion clinica, investigacion y planeacion hospitalaria.
+- Objetivos estrategicos:
+  - Analitica institucional: tableros operativos con posibilidad de integracion a Power BI.
+  - Investigacion clinica: seguimiento de biomarcadores y cohortes longitudinales.
+  - Optimizacion de recursos: monitoreo de volumen, tiempos y responsables.
+  - Automatizacion de procesos: eliminacion de transcripcion manual y conectores con sistemas HUV.
+  - Fundacion para IA: dataset curado para futuros modelos predictivos y asistentes clinicos.
 
-Gobernanza y Roles
-- Líder de Proyecto e Investigador Principal: Dr. Juan Camilo Bayona (Jefe Médico de Oncología).
-- Desarrollador Principal: Ing. Daniel Restrepo (Área de Innovación y Desarrollo, GDI).
-- Entidad Ejecutora: Área de Innovación y Desarrollo del HUV Evaristo García.
-- Jefe de Gestión de la Información (GDI): Ing. Diego Peña.
+Gobernanza y roles
+- Lider medico e investigador principal: Dr. Juan Camilo Bayona (Oncologia).
+- Desarrollador principal: Ing. Daniel Restrepo (Area de Innovacion y Desarrollo, GDI).
+- Jefe de Gestion de la Informacion: Ing. Diego Pena.
+- Entidad ejecutora: Area de Innovacion y Desarrollo del HUV Evaristo Garcia.
 
-Alcance Actual (v1.1)
-- OCR (PyMuPDF + Tesseract) y extracción por expresiones regulares.
-- Mapeo a esquema operativo de 55 columnas y exportación a Excel.
-- Procesadores especializados: Autopsia, IHQ, Biopsia, Revisión.
-- Análisis avanzado de IHQ: botón en la UI “Analizar Biomarcadores IHQ (v1.1)” que produce un Excel extendido con biomarcadores.
-- Artefactos operativos: logs, archivos de depuración OCR y UI para procesamiento por lotes.
+Alcance actual (v2.5)
+- OCR hibrido (texto nativo + Tesseract) con configuracion via `config.ini`.
+- Extraccion especializada IHQ (`procesador_ihq_biomarcadores`) con segmentacion multi informe y normalizacion de biomarcadores.
+- Persistencia en SQLite (`huv_oncologia.db`) gestionada por `database_manager`, evitando duplicados.
+- Interfaz CustomTkinter con vistas de Procesamiento, Visualizacion y Dashboard, mas modo claro/oscuro.
+- Dashboard Matplotlib/Seaborn con filtros dinamicos, comparador parametrico y exportacion visual.
+- Automatizacion Selenium (`huv_web_automation.py`) para consultas en `huvpatologia.qhorte.com`.
+- Widget `CalendarioInteligente` para seleccion contextual de fechas y festivos.
 
-Hoja de Ruta (Roadmap)
-- Fase 1 – Fundación y Validación (Completada – v1.0):
-  - Motor de OCR y app de escritorio.
-  - Procesadores especializados para cuatro plantillas base (Biopsia, IHQ, Autopsia, Revisión).
-  - Salida validada a Excel de 55 columnas.
-- Fase 2 – Enriquecimiento de Datos para Investigación (v1.1 liberada y en avance):
-  - Análisis avanzado de IHQ (v1.1): biomarcadores clave (HER2, Ki‑67, RE/ER, RP/PR, PD‑L1, P16, Estudios Solicitados) en Excel separado.
-  - Próximo: Módulo de adquisición automatizada (scraper institucional) para `huvpatologia.qhorte.com` con login, descarga masiva y organización de PDFs.
-- Fase 3 – Centralización y Visualización de Datos:
-  - Migración de Excel a base de datos centralizada (SQL o similar).
-  - Dashboards y reportes dinámicos en Power BI.
-- Fase 4 – Integración y Automatización Sistémica:
-  - Módulo de integración con SERVINTE (carga automática y segura de datos).
-  - Escalamiento a otras áreas de alto costo.
-- Fase 5 – Inteligencia Aumentada:
-  - Modelos predictivos (demanda de medicamentos, tendencias).
-  - Asistente de IA para soporte diagnóstico (conocimiento validado y data histórica).
+Hoja de ruta (roadmap)
+- Fase 1 – Fundacion y validacion (completa, v1.0).
+- Fase 2 – Enriquecimiento de datos IHQ (completa, v1.1).
+- Fase 3 – Centralizacion y visualizacion (en curso, v2.5 entrega base persistente y dashboard integrado; pendiente integrar otras plantillas).
+- Fase 4 – Integracion SERVINTE (planeada: API/CSV, colas locales, modo dry-run).
+- Fase 5 – Inteligencia aumentada (planeada: modelos predictivos, asistente clinico).
 
-Metodología y Gestión del Proyecto
-- Versionamiento: semántico. Versión estable v1.1 consolidada el 10/09/2025.
-- Historial de cambios: `CHANGELOG.md` como fuente de verdad del histórico.
-- Trazabilidad: `BITACORA_DE_ACERCAMIENTOS.md` para registrar reuniones, acuerdos y seguimiento.
+Metodologia y gestion del proyecto
+- Versionamiento semantico; 2.5 representa la primera entrega con persistencia integrada.
+- `CHANGELOG.md` y `BITACORA_DE_ACERCAMIENTOS.md` como fuentes de verdad para cambios y compromisos.
+- Enfoque incremental: primeras fases cerradas, nuevas fases iterativas sobre la base SQLite.
 
-Activos y Fuentes de Datos
-- Esquemas de datos de referencia:
-  - Esquema operativo (55 columnas): estándar validado de salida actual.
-  - Esquema Maestro H.U.V (167 columnas): formato exhaustivo institucional (guía para el enriquecimiento futuro).
-- Fuente primaria de informes (PDFs):
-  - Portal de Patología H.U.V: `https://huvpatologia.qhorte.com/index.php` (acceso solo intranet HUV).
-- Fuentes de conocimiento científico (para futura IA):
-  - CAP: `https://www.cap.org/protocols-and-guidelines/cancer-reporting-tools/cancer-protocol-templates`
-  - Pathology Outlines: `https://www.pathologyoutlines.com/`
-  - OMS Libros Azules: `https://tumourclassification.iarc.who.int/home` (acceso con credenciales).
+Activos y fuentes de datos
+- Base operativa: `huv_oncologia.db` (tabla `informes_ihq`).
+- Esquema maestro HUV (167 campos) como norte para futuras ampliaciones (autopsia, biopsia, revision).
+- Portal de patologia HUV `https://huvpatologia.qhorte.com/index.php` como fuente primaria de PDFs.
+- Repositorio de conocimiento: CAP, Pathology Outlines, OMS (para enriquecimiento futuro).
 
-Arquitectura (Resumen)
-- `huv_ocr_sistema_definitivo.py`: punto de entrada y GUI.
-- `ocr_processing.py`: renderizado PDF e interfaz con Tesseract.
-- `data_extraction.py`: extracción/normalización y mapeo a 55 columnas.
-- `huv_constants.py`: constantes, CUPS/procedimientos, patrones.
-- Procesadores: `procesador_autopsia.py`, `procesador_ihq.py`, `procesador_biopsia.py`, `procesador_revision.py`.
+Arquitectura (resumen)
+- `huv_ocr_sistema_definitivo.py`: punto de entrada, configura Tesseract y lanza la UI.
+- `ui.py`: interfaz CustomTkinter, orquestacion del pipeline y dashboard.
+- `ocr_processing.py`: render OCR con estrategia hibrida y limpieza post OCR.
+- `procesador_ihq_biomarcadores.py`: extraccion especializada y persistencia.
+- `database_manager.py`: inicializacion de SQLite, guardado y lectura.
+- `huv_web_automation.py`: automatizacion del portal con Selenium.
+- `calendario.py`: calendario inteligente con festivos.
 
-Ejecución Básica
-- App principal: `python huv_ocr_sistema_definitivo.py`
-- Requisitos: Tesseract instalado; dependencias de `requirements.txt`.
+Ejecucion y despliegue
+- App principal: `python huv_ocr_sistema_definitivo.py`.
+- Dependencias: Tesseract instalado, Python 3.9+, paquetes de `requirements.txt`, Google Chrome.
+- Primer arranque descarga ChromeDriver automaticamente (requiere internet).
 
-Notas Finales
-- La v1.1 entrega valor inmediato, añade análisis avanzado de IHQ y sienta la base técnica para centralización, visualización estratégica, integración con SERVINTE e inteligencia aumentada.
+Notas finales
+- La version 2.5 estabiliza el pipeline IHQ, entrega visualizaciones inmediatas y sienta las bases para integrar otras plantillas y sistemas core (SERVINTE, Power BI).
+- Proximos pasos: extender persistencia a Biopsia/Autopsia, habilitar sincronizacion incremental con el data warehouse y reforzar pruebas automatizadas de extraccion.

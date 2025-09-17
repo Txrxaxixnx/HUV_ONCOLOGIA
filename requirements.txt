@@ -7,3 +7,8 @@ python-dateutil
 customtkinter
 matplotlib
 seaborn
+selenium
+webdriver-manager
+ttkbootstrap
+Babel
+holidays

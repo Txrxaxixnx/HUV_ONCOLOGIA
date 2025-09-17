@@ -10,6 +10,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from datetime import datetime
 import numpy as np
 
+from calendario import CalendarioInteligente
+from huv_web_automation import automatizar_entrega_resultados, Credenciales
+
 # =========================
 # Tema oscuro y paleta EVARISIS Gestor HUV
 # =========================
@@ -46,6 +49,15 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
+        try:
+            from ttkbootstrap import Style as TBStyle
+            self._tbstyle = TBStyle(theme="darkly")  # puedes usar otro tema si prefieres
+        except Exception as e:
+            self._tbstyle = None
+            print(f"[WARN] ttkbootstrap no inicializado ({e}). Usando ttk estándar.")
+
+        self._init_treeview_style()
+        
         # ---------- Ventana principal ----------
         self.title("EVARISIS Gestor HUV")
         self.state('zoomed')       # Y añadimos esta, ¡listo el pollo!
@@ -109,6 +121,11 @@ class App(ctk.CTk):
             self.nav_frame, text="Dashboard Analítico", command=self.show_dashboard_frame, height=40
         )
         self.btn_dashboard.grid(row=3, column=0, padx=20, pady=12, sticky="ew")
+
+        self.btn_webauto = ctk.CTkButton(
+            self.nav_frame, text="Automatizar BD Web", command=self.open_web_auto_modal, height=40
+        )
+        self.btn_webauto.grid(row=4, column=0, padx=20, pady=12, sticky="ew")
 
         self.theme_switch = ctk.CTkSwitch(self.nav_frame, text="Modo Claro", command=self.change_theme)
         self.theme_switch.grid(row=5, column=0, padx=20, pady=20, sticky="s")
@@ -1103,6 +1120,131 @@ class App(ctk.CTk):
         )
         style.map("Custom.Treeview.Heading", background=[("active", "#2d3136")])
         return style
+    # ---------- Automatización Web (modal + ejecución) ----------
+
+    def open_web_auto_modal(self):
+        top = ctk.CTkToplevel(self)
+        top.title("Automatizar Entrega de Resultados")
+        top.geometry("460x360")
+        top.grab_set()
+
+        top.transient(self)
+        try:
+            top.lift(); top.focus_force()
+        except Exception:
+            pass
+        
+        # Campos
+        frm = ctk.CTkFrame(top, fg_color=SURFACE, corner_radius=12)
+        frm.pack(fill="both", expand=True, padx=12, pady=12)
+
+        # Usuario / Clave
+        ctk.CTkLabel(frm, text="Usuario").grid(row=0, column=0, padx=10, pady=(12,6), sticky="w")
+        user_var = ctk.StringVar(value="12345")
+        ctk.CTkEntry(frm, textvariable=user_var).grid(row=0, column=1, padx=10, pady=(12,6), sticky="ew")
+
+        ctk.CTkLabel(frm, text="Contraseña").grid(row=1, column=0, padx=10, pady=6, sticky="w")
+        pass_var = ctk.StringVar(value="CONSULTA1")
+        ctk.CTkEntry(frm, textvariable=pass_var, show="•").grid(row=1, column=1, padx=10, pady=6, sticky="ew")
+
+        # Criterio
+        ctk.CTkLabel(frm, text="Buscar por").grid(row=2, column=0, padx=10, pady=6, sticky="w")
+        criterio_var = ctk.StringVar(value="Fecha de Ingreso")
+        ctk.CTkComboBox(frm, values=["Fecha de Ingreso", "Fecha de Finalizacion", "Rango de Peticion", "Datos del Paciente"], variable=criterio_var).grid(row=2, column=1, padx=10, pady=6, sticky="ew")
+
+        # Fechas
+        fi_var = ctk.StringVar(value="")
+        ff_var = ctk.StringVar(value="")
+
+        def pick_fi():
+            sel = CalendarioInteligente.seleccionar_fecha(parent=top, locale='es_CO', codigo_pais_festivos='CO')
+            if sel:
+                fi_var.set(sel.strftime("%d/%m/%Y"))
+            # RE-ADQUIRIR MODAL Y TRAER AL FRENTE
+            try:
+                top.deiconify()
+                # truco para traer al frente en Windows
+                top.attributes("-topmost", True); top.attributes("-topmost", False)
+                top.lift(); top.focus_force(); top.grab_set()
+            except Exception:
+                pass
+
+        def pick_ff():
+            sel = CalendarioInteligente.seleccionar_fecha(parent=top, locale='es_CO', codigo_pais_festivos='CO')
+            if sel:
+                ff_var.set(sel.strftime("%d/%m/%Y"))
+            # RE-ADQUIRIR MODAL Y TRAER AL FRENTE
+            try:
+                top.deiconify()
+                top.attributes("-topmost", True); top.attributes("-topmost", False)
+                top.lift(); top.focus_force(); top.grab_set()
+            except Exception:
+                pass
+
+        ctk.CTkLabel(frm, text="Fecha inicial").grid(row=3, column=0, padx=10, pady=6, sticky="w")
+        row_fi = ctk.CTkFrame(frm, fg_color="transparent"); row_fi.grid(row=3, column=1, padx=10, pady=6, sticky="ew")
+        ctk.CTkEntry(row_fi, textvariable=fi_var).pack(side="left", fill="x", expand=True, padx=(0,6))
+        ctk.CTkButton(row_fi, text="Elegir…", width=80, command=pick_fi).pack(side="left")
+
+        ctk.CTkLabel(frm, text="Fecha final").grid(row=4, column=0, padx=10, pady=6, sticky="w")
+        row_ff = ctk.CTkFrame(frm, fg_color="transparent"); row_ff.grid(row=4, column=1, padx=10, pady=6, sticky="ew")
+        ctk.CTkEntry(row_ff, textvariable=ff_var).pack(side="left", fill="x", expand=True, padx=(0,6))
+        ctk.CTkButton(row_ff, text="Elegir…", width=80, command=pick_ff).pack(side="left")
+
+        # Botones
+        btns = ctk.CTkFrame(frm, fg_color="transparent"); btns.grid(row=5, column=0, columnspan=2, pady=(12,8), sticky="ew")
+        ctk.CTkButton(btns, text="Cancelar", command=top.destroy).pack(side="right", padx=6)
+        def go():
+            top.destroy()
+            self._start_web_automation(
+                fi_var.get().strip(), ff_var.get().strip(),
+                user_var.get().strip(), pass_var.get().strip(),
+                criterio_var.get().strip()
+            )
+        ctk.CTkButton(btns, text="Iniciar", command=go).pack(side="right", padx=6)
+
+        # grid conf
+        frm.grid_columnconfigure(1, weight=1)
+
+    def _start_web_automation(self, fi, ff, user, pwd, criterio):
+        if not fi or not ff:
+            messagebox.showwarning("Fechas requeridas", "Debe seleccionar fecha inicial y final.")
+            return
+        self.set_status("Automatizando Entrega de resultados…")
+        t = threading.Thread(target=self._run_web_automation, args=(fi, ff, user, pwd, criterio), daemon=True)
+        t.start()
+
+    def _run_web_automation(self, fi, ff, user, pwd, criterio):
+        try:
+            ok = automatizar_entrega_resultados(
+                fecha_inicial_ddmmaa=fi,
+                fecha_final_ddmmaa=ff,
+                cred=Credenciales(usuario=user, clave=pwd),
+                criterio=criterio,
+                headless=False,
+                log_cb=self._log_auto
+            )
+            if ok:
+                self.set_status("Consulta web completada. Revise resultados en el navegador.")
+                messagebox.showinfo("Automatización", "Consulta completada en el portal.")
+            else:
+                self.set_status("Automatización: sin resultado.")
+        except Exception as e:
+            self.set_status(f"Error en automatización: {e}")
+            messagebox.showerror("Automatización", f"Ocurrió un error:\n{e}")
+
+    def _log_auto(self, msg: str):
+        try:
+            # Si está visible el textbox de logs de Procesar, úsalo; si no, status.
+            if hasattr(self, "log_textbox") and str(self.log_textbox.winfo_exists()) == "1":
+                self.log_textbox.configure(state="normal")
+                self.log_textbox.insert("end", f"[AUTO] {msg}\n")
+                self.log_textbox.configure(state="disabled")
+                self.log_textbox.see("end")
+            else:
+                self.set_status(msg)
+        except Exception:
+            self.set_status(msg)
 
     # =========================
     # Tema claro/oscuro
@@ -1115,6 +1257,42 @@ class App(ctk.CTk):
             ctk.set_appearance_mode("Dark")
             self.set_status("Tema oscuro activado.")
 
+    def _init_treeview_style(self):
+        """
+        Define el estilo 'Custom.Treeview' y su heading. Usa colores por defecto si no existen constantes.
+        """
+        try:
+            from tkinter import ttk as _ttk
+            s = _ttk.Style()
+
+            # Fallbacks por si no tienes BG/SURFACE/TEXT/ACCENT definidos
+            bg      = globals().get("BG", "#1a1b1e")
+            surface = globals().get("SURFACE", "#23262b")
+            text    = globals().get("TEXT", "#eaeaea")
+            accent  = globals().get("ACCENT", "#2f8bfd")
+
+            s.configure(
+                "Custom.Treeview",
+                background=bg,
+                fieldbackground=bg,
+                foreground=text,
+                rowheight=26,
+                borderwidth=0,
+            )
+            s.map(
+                "Custom.Treeview",
+                background=[("selected", accent)],
+                foreground=[("selected", "white")],
+            )
+            s.configure(
+                "Custom.Treeview.Heading",
+                background=surface,
+                foreground=text,
+                relief="flat",
+                padding=6,
+            )
+        except Exception as e:
+            print(f"[WARN] No se pudo configurar Custom.Treeview: {e}")
 
 if __name__ == "__main__":
     app = App()
